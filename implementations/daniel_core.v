@@ -12,11 +12,16 @@ module core (clk, inst_q, ofifo_valid, D_xmem, sfp_out, reset);
   output [psum_bw*col-1:0] sfp_out;
   output ofifo_valid;
 
+  wire [row*bw-1:0] l0_input;
+  wire [psum*bw-1:0] ofifo_output;
+
   corelet #(.bw(bw), .psum_bw(psum_bw), .row(row), .col(col)) corelet_instance (
     .clk(clk),
     .reset(reset),
     .inst_q(inst_q),
-    .ofifo_valid(ofifo_valid);
+    .ofifo_valid(ofifo_valid),
+    .l0_input(l0_input),
+    .ofifo_output(ofifo_output)
   );
 
 
@@ -26,7 +31,7 @@ module core (clk, inst_q, ofifo_valid, D_xmem, sfp_out, reset);
     .CEN(inst_q[19]),
     .D(D_xmem),
     .A(inst_q[17:7]),
-    .Q(...)
+    .Q(l0_input)
   );
 
   sram #(.SIZE(8*8*9), .WIDTH(4), .ADD_WIDTH(10)) weight_sram (
@@ -38,11 +43,11 @@ module core (clk, inst_q, ofifo_valid, D_xmem, sfp_out, reset);
     .Q(...)
   );
 
-  sram #(.SIZE(8*36*9), .WIDTH(16), .ADD_WIDTH(12)) psum_sram (
+  sram #(.SIZE(36*9), .WIDTH(psum_bw*col), .ADD_WIDTH(12)) psum_sram (
     .CLK(clk),
     .WEN(inst_q[31]),
     .CEN(inst_q[32]),
-    .D(...),
+    .D(ofifo_output),
     .A(inst_q[30:20]),
     .Q(...)
   );
