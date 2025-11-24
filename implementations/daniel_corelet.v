@@ -13,7 +13,6 @@ output [col*psum_bw-1:0] ofifo_output;
 output ofifo_valid;
 
 wire [col-1:0] ofifo_wr;
-wire [col*psum_bw-1:0] ofifo_input;
 wire [row*bw-1:0] l0_output;
 
 wire ofifo_ready;
@@ -22,11 +21,14 @@ wire ofifo_full;
 wire l0_ready;
 wire l0_full;
 
+wire [col*psum_bw-1:0] mac_output;
+wire [col*psum_bw-1:0] sfp_output;
+
 // MAC array
   mac_array #(.bw(bw), .psum_bw(psum_bw)) mac_array_instance (
     .clk(clk),
     .reset(reset),
-    .out_s(ofifo_input),    // output connected to SFU/OFIFO
+    .out_s(mac_output),    // output connected to SFU
     .in_w(l0_output), // I'm not sure if this is safe, or needs to be guarded by a control bit to make sure that l0_output is currently in weight loading mode.
     .in_n({psum_bw*col{1'b0}}),
     .inst_w({inst_q[1], inst_q[0]}),  // instruction for MAC (kernel loading / execute)
@@ -49,16 +51,16 @@ wire l0_full;
   sfp #(.col(col), .psum_bw(psum_bw)) sfp_instance (
       .clk(clk),
       .reset(reset),
-      .in_psum(ofifo_input),    // MAC outputs
+      .in_psum(mac_output),    // MAC outputs connected to SFU input
       .valid_in(ofifo_wr),      // MAC output valid
-      .out_accum(ofifo_input),  // reuse ofifo_input as SFU output
+      .out_accum(sfp_output),   // SFP output (accum + relu) connected to OFIFO input
       .wr_ofifo(ofifo_wr),     // write enable for OFIFO
       .o_valid(ofifo_valid)
     );
 
   ofifo #(.col(col), .bw(psum_bw)) ofifo_instance (
     .clk(clk),
-    .in(ofifo_input),   // SFU output
+    .in(sfp_output),   // SFU output
     .out(ofifo_output),
     .rd(inst_q[6]),       // read enable
     .wr(ofifo_wr),        // write enable from SFU

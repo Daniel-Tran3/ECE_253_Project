@@ -32,26 +32,23 @@ module sfp (clk, reset, in_psum, valid_in, out_accum, wr_ofifo, o_valid);
                     if (valid_in[k])
                         next_val = acc_reg[k] + in_val;
 
-                    // ReLU
-                    if (next_val < 0)
-                        next_val = 0;
-
                     acc_reg[k] <= next_val;
                 end
             end
 
-            // output mapping
-            assign out_accum[(k+1)*psum_bw-1 : k*psum_bw] = acc_reg[k];
+            // output mapping & ReLU
+            assign out_accum[(k+1)*psum_bw-1 : k*psum_bw] = (acc_reg[k] < 0) ? 0 : acc_reg[k];
+
 
         end
     endgenerate
 
-    // wr_ofifo and o_valid registers (ensure stable signal)
+    // wr_ofifo and o_valid registers
     always @(posedge clk or posedge reset) begin
         if (reset)
             wr_reg <= 0;
         else
-            wr_reg <= valid_in;     // ensures write enable for FIFO happens in sync with data
+            wr_reg <= valid_in;
     end
 
 endmodule
