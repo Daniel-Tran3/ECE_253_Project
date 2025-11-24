@@ -241,19 +241,37 @@ initial begin
     /////// Activation data writing to L0 ///////
     A_xmem = 11'b00000000000;  xw_mode = 0;
     for (t=0; t<col; t=t+1) begin
-	    #0.5 clk = 1'b0; l0_rd = 1; CEN_xmem = 0;
+	    #0.5 clk = 1'b0; l0_wr = 1; CEN_xmem = 0;
       if (t > 0) A_xmem = A_xmem + 1;
       #0.5 clk = 1'b1;
     end
 
-    #0.5 clk = 1'b0; ififo_wr = 0; CEN_xmem = 1; A_xmem = 0;
+    #0.5 clk = 1'b0; l0_wr = 0; CEN_xmem = 1; A_xmem = 0;
     #0.5 clk = 1'b1;
     /////////////////////////////////////
 
 
 
     /////// Execution ///////
-    ...
+    for (t = 0; t < col; t=t+1) begin
+      #0.5 clk = 1'b0; execute = 1; l0_rd = 1;
+      #0.5 clk = 1'b1;
+    end
+
+    #0.5 clk = 1'b0; execute = 0; l0_rd = 0;
+
+    // Wait for last element to load
+    for (t = 0; t < col; t=t+1) begin
+      #0.5 clk = 1'b0;
+      #0.5 clk = 1'b1;
+    end
+
+
+    // Wait for last element to be delivered to bottom
+    for (t = 0; t < row; t=t+1) begin
+      #0.5 clk = 1'b0;
+      #0.5 clk = 1'b1;
+    end
     /////////////////////////////////////
 
 
