@@ -27,8 +27,8 @@ wire l0_full;
     .clk(clk),
     .reset(reset),
     .out_s(...),
-    .in_w(...),
-    .in_n(...),
+    .in_w(l0_output), // I'm not sure if this is safe, or needs to be guarded by a control bit to make sure that l0_output is currently in weight loading mode.
+    .in_n({psum_bw*col{1'b0}}),
     .inst_w({inst_q[1], inst_q[0]}),
     .valid(ofifo_wr)
   );

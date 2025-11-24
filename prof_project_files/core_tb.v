@@ -17,6 +17,7 @@ reg reset = 1;
 
 wire [33:0] inst_q; 
 
+reg xw_mode = 0; // x if 0, w if 1
 reg [1:0]  inst_w_q = 0; 
 reg [bw*row-1:0] D_xmem_q = 0;
 reg CEN_xmem = 1;
@@ -88,6 +89,7 @@ core  #(.bw(bw), .col(col), .row(row)) core_instance (
 	.ofifo_valid(ofifo_valid),
         .D_xmem(D_xmem_q), 
         .sfp_out(sfp_out), 
+	.xw_mode(xw_mode)m
 	.reset(reset)); 
 
 
@@ -124,7 +126,7 @@ initial begin
     #0.5 clk = 1'b1;  
   end
 
-  #0.5 clk = 1'b0;   reset = 0;
+  #0.5 clk = 1'b0;   reset = 0; xw_mode = 0;
   #0.5 clk = 1'b1; 
 
   #0.5 clk = 1'b0;   
@@ -137,7 +139,7 @@ initial begin
     #0.5 clk = 1'b1;   
   end
 
-  #0.5 clk = 1'b0;  WEN_xmem = 1;  CEN_xmem = 1; A_xmem = 0;
+  #0.5 clk = 1'b0;  WEN_xmem = 1;  CEN_xmem = 1; A_xmem = 0; xw_mode = 1;
   #0.5 clk = 1'b1; 
 
   $fclose(x_file);
@@ -173,7 +175,7 @@ initial begin
       #0.5 clk = 1'b1;  
     end
 
-    #0.5 clk = 1'b0;   reset = 0;
+    #0.5 clk = 1'b0;   reset = 0; 
     #0.5 clk = 1'b1; 
 
     #0.5 clk = 1'b0;   
