@@ -8,6 +8,8 @@ parameter col = 8;
 input clk, reset;
 input [33:0] inst_q;
 
+output ofifo_valid;
+
 wire [col-1:0] ofifo_wr;
 
 
