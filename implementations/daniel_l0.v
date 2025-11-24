@@ -39,21 +39,23 @@ module l0 (clk, in, out, rd, wr, o_full, reset, o_ready);
 
 
   always @ (posedge clk) begin
-   if (reset) begin
+    if (reset) begin
       rd_en <= 8'b00000000;
-   end
-   else
+    end
+    else
 
-      /////////////// version1: read all row at a time ////////////////
-      //rd_en <= {8{rd}};
-      ///////////////////////////////////////////////////////
+	    if (!xw_mode) begin
+        /////////////// version1: read all row at a time ////////////////
+        rd_en <= {8{rd}};
+        ///////////////////////////////////////////////////////
 
 
-
-      //////////////// version2: read 1 row at a time /////////////////
-      rd_en[0] <= rd;
-      rd_en[row-1:1] <= rd_en[row-2:0];
-      ///////////////////////////////////////////////////////
+      end else begin
+        //////////////// version2: read 1 row at a time /////////////////
+        rd_en[0] <= rd;
+        rd_en[row-1:1] <= rd_en[row-2:0];
+        ///////////////////////////////////////////////////////
+      end
     end
 
 endmodule
