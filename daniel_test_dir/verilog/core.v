@@ -28,6 +28,7 @@ module core (clk, inst, ofifo_valid, D_xmem, sfp_out, xw_mode, reset, sfp_reset)
     .ofifo_valid(ofifo_valid),
     .l0_input(l0_input),
     .ofifo_output(ofifo_output),
+    .sfp_input(psum_sram_output),
     .sfp_out(sfp_out),
     .xw_mode(xw_mode),
     .sfp_reset(sfp_reset)
