@@ -19,6 +19,8 @@ module mac_row (clk, out_s, in_w, in_n, valid, inst_w, reset);
   assign temp[bw-1:0]   = in_w;
   assign temp_inst_w[1:0] = inst_w;
 
+  genvar j;
+
   genvar i;
   generate
   for (i=1; i < col+1 ; i=i+1) begin : col_num
@@ -34,8 +36,10 @@ module mac_row (clk, out_s, in_w, in_n, valid, inst_w, reset);
   end
   endgenerate
 
-  for (i=1; i < col+1; i = i+ 1) begin
-    assign valid[i-1] = temp_inst_w[2*(i+1)-1];
-  end
+  generate
+    for (j=1; j < col+1; j = j+ 1) begin
+      assign valid[j-1] = temp_inst_w[2*(j+1)-1];
+    end
+  endgenerate
 
 endmodule

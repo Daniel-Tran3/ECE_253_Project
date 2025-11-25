@@ -1,4 +1,4 @@
-module corelet (clk, reset, inst, l0_input, ofifo_valid, ofifo_output, xw_mode, sfp_out, sfp_reset, sfp_input, relu_en);
+module corelet (clk, reset, inst, l0_input, ofifo_valid, ofifo_output, xw_mode, sfp_out, sfp_reset, sfp_input, relu_en, act_mode);
 
 parameter bw = 4;
 parameter psum_bw = 16;
@@ -13,6 +13,7 @@ input [col*psum_bw-1:0] sfp_input;
 input xw_mode;
 input sfp_reset;
 input relu_en;
+input act_mode;
 
 output [col*psum_bw-1:0] ofifo_output;
 output ofifo_valid;
@@ -44,7 +45,8 @@ assign sfp_out = sfp_output;
     .in_w(l0_output), // I'm not sure if this is safe, or needs to be guarded by a control bit to make sure that l0_output is currently in weight loading mode.
     .in_n({psum_bw*col{1'b0}}),
     .inst_w({inst[1], inst[0]}),  // instruction for MAC (kernel loading / execute)
-    .valid(mac_array_valid_o)    // output valid for each column
+    .valid(mac_array_valid_o),    // output valid for each column
+    .act_mode(act_mode)
   );
 
 // L0 scratchpad (input activations)
@@ -69,7 +71,8 @@ assign sfp_out = sfp_output;
       .out_accum(sfp_output),   // SFP output (accum + relu) connected to OFIFO input
       .wr_ofifo(ofifo_wr),     // write enable for OFIFO
       .o_valid(sfp_valid),
-      .relu_en(relu_en)
+      .relu_en(relu_en),
+      .act_mode(act_mode)
     );
 
   ofifo #(.col(col), .bw(psum_bw)) ofifo_instance (

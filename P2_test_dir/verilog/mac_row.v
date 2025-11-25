@@ -1,6 +1,6 @@
 // Created by prof. Mingu Kang @VVIP Lab in UCSD ECE department
 // Please do not spread this code without permission 
-module mac_row (clk, out_s, in_w, in_n, valid, inst_w, reset);
+module mac_row (clk, out_s, in_w, in_n, valid, inst_w, reset, act_mode);
 
   parameter bw = 4;
   parameter psum_bw = 16;
@@ -12,6 +12,7 @@ module mac_row (clk, out_s, in_w, in_n, valid, inst_w, reset);
   input  [bw-1:0] in_w; // inst[1]:execute, inst[0]: kernel loading
   input  [1:0] inst_w;
   input  [psum_bw*col-1:0] in_n;
+  input  act_mode;
 
   wire  [(col+1)*bw-1:0] temp;
   wire  [(col+1)*2-1:0]  temp_inst_w;
@@ -30,7 +31,8 @@ module mac_row (clk, out_s, in_w, in_n, valid, inst_w, reset);
 	 .inst_w(temp_inst_w[2*i-1:2*(i-1)]),
 	 .inst_e(temp_inst_w[2*(i+1)-1:2*i]),
 	 .in_n(in_n[psum_bw*i-1:psum_bw*(i-1)]),
-	 .out_s(out_s[psum_bw*i-1:psum_bw*(i-1)]));
+	 .out_s(out_s[psum_bw*i-1:psum_bw*(i-1)]),
+ 	 .act_mode(act_mode));
   end
   endgenerate
 

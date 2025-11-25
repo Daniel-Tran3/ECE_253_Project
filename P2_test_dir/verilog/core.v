@@ -1,4 +1,4 @@
-module core (clk, inst, ofifo_valid, D_xmem, sfp_out, xw_mode, reset, sfp_reset,, relu_en, pmem_mode);
+module core (clk, inst, ofifo_valid, D_xmem, sfp_out, xw_mode, reset, sfp_reset, act_mode, relu_en, pmem_mode);
 
   parameter bw = 4;
   parameter psum_bw = 16;
@@ -10,6 +10,7 @@ module core (clk, inst, ofifo_valid, D_xmem, sfp_out, xw_mode, reset, sfp_reset,
   input [row*bw-1:0] D_xmem;
   input xw_mode; // x if 0, w if 1
   input pmem_mode; // write from OFIFO if 0, write from SFP if 1
+  input act_mode; // 4 bits if 0, 2 bits if 1
   input relu_en;
 
   output [psum_bw*col-1:0] sfp_out;
@@ -39,7 +40,8 @@ module core (clk, inst, ofifo_valid, D_xmem, sfp_out, xw_mode, reset, sfp_reset,
     .sfp_out(sfp_out),
     .xw_mode(xw_mode),
     .sfp_reset(sfp_reset),
-    .relu_en(relu_en)
+    .relu_en(relu_en),
+    .act_mode(act_mode)
   );
 
 
