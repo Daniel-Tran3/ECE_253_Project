@@ -24,6 +24,7 @@ reg sfp_reset = 1;
 wire [33:0] inst_q; 
 
 reg xw_mode = 0; // x if 0, w if 1
+reg pmem_mode = 0; // write from OFIFO if 0, write from SFP if 1
 reg [1:0]  inst_w_q = 0; 
 reg [bw*row-1:0] D_xmem_q = 0;
 reg CEN_xmem = 1;
@@ -50,6 +51,7 @@ reg acc = 0;
 reg relu_en = 0;
 reg relu_en_q = 0;
 
+reg [10:0] A_pmem_sfp = 0;
 reg [1:0]  inst_w; 
 reg [bw*row-1:0] D_xmem;
 reg [psum_bw*col-1:0] answer;
@@ -104,7 +106,9 @@ core  #(.bw(bw), .col(col), .row(row)) core_instance (
         .sfp_out(sfp_out), 
 	.xw_mode(xw_mode),
 	.reset(reset),
-	.sfp_reset(sfp_reset)); 
+	.sfp_reset(sfp_reset),
+	.relu_en(relu_en_q),
+	.pmem_mode(pmem_mode)); 
 
 
 initial begin 
@@ -121,6 +125,7 @@ initial begin
   l0_wr    = 0;
   execute  = 0;
   load     = 0;
+  pmem_mode = 0;
 
   $dumpfile("core_tb.vcd");
   $dumpvars(0,core_tb);
@@ -449,7 +454,7 @@ end
              
               
             end
-
+		     //$display("%d", A_pmem);
                      //$display("%d", core_instance.psum_sram.A);
                      //$display("%b", core_instance.psum_sram.D); 
 	    #0.5 clk = 1'b1;
@@ -472,7 +477,8 @@ end
   out_scan_file = $fscanf(out_file,"%s", answer); 
   out_scan_file = $fscanf(out_file,"%s", answer); 
 
-  error = 0; A_pmem = 0;
+  error = 0; A_pmem = 0; pmem_mode = 1; A_pmem_sfp[10] = 1;
+
 /*
   A_pmem = 11'b00000000000; 
     for (t=0; t<600; t=t+1) begin
@@ -495,33 +501,41 @@ end
 
   for (i=0; i<len_onij+1; i=i+1) begin 
 
-    #0.5 clk = 1'b0; 
+    #0.5 clk = 1'b0;
+    CEN_pmem = 1; WEN_pmem = 1; 
+	    //$display("Writing to PMEM.");
+            //$display("Address: %d", A_pmem);
+            //$display("Address: %d", core_instance.psum_sram.A);
+            //$display("Data in: %128b", core_instance.psum_sram.D);
+ 
     #0.5 clk = 1'b1; 
 
     if (i>0) begin
      out_scan_file = $fscanf(out_file,"%128b", answer); // reading from out file to answer
      
-       if (sfp_out == answer)
+     if (sfp_out == answer) begin
          $display("%2d-th output featuremap Data matched! :D", i); 
-       else begin
+         //$display("sfpout: %128b", sfp_out);
+         //$display("answer: %128b", answer);
+     end else begin
          $display("%2d-th output featuremap Data ERROR!!", i); 
          $display("sfpout: %128b", sfp_out);
          $display("answer: %128b", answer);
          error = 1;
        end
-     
+              
     end
    
  
-    #0.5 clk = 1'b0; reset = 1; sfp_reset = 1;
+    #0.5 clk = 1'b0; reset = 1; sfp_reset = 1; CEN_pmem = 1; WEN_pmem = 1; A_pmem[10] = 0;
     #0.5 clk = 1'b1;  
-    #0.5 clk = 1'b0; reset = 0; sfp_reset = 0;
-    #0.5 clk = 1'b1;  
+    #0.5 clk = 1'b0; reset = 0; sfp_reset = 0;     #0.5 clk = 1'b1;  
 
     for (j=0; j<len_kij+1; j=j+1) begin 
 
       #0.5 clk = 1'b0;   relu_en = 0;
-        if (j<len_kij) begin CEN_pmem = 0; WEN_pmem = 1; 
+        if (j<len_kij) begin 
+		CEN_pmem = 0; WEN_pmem = 1; 
         //acc_scan_file = $fscanf(acc_file,"%11b", A_pmem);
         A_pmem[5:0] = $floor(i / o_ni_dim) * a_pad_ni_dim + i % o_ni_dim + $floor(j / ki_dim) * a_pad_ni_dim + j % ki_dim;
         A_pmem[9:6] = j;
@@ -541,11 +555,20 @@ end
     end
 
     #0.5 clk = 1'b0; acc = 0; relu_en = 0;
-    //$display("Input: %b", core_instance.corelet_instance.sfp_instance.in_psum);
+    #0.5 clk = 1'b1;
+    #0.5 clk = 1'b0;
+    if (i > 0) begin 
+	     A_pmem_sfp = A_pmem_sfp + 1; 
+     end
+     A_pmem = A_pmem_sfp;
+     //$display("Input: %b", core_instance.corelet_instance.sfp_instance.in_psum);
     //$display("Output: %b", core_instance.corelet_instance.sfp_instance.out_accum);
-
+     if (i < len_onij)  begin
+	    CEN_pmem = 0; WEN_pmem = 0;
+    end
     //$display("%b", core_instance.corelet_instance.sfp_instance.out_accum);
     #0.5 clk = 1'b1;  
+    
 
 
   end
@@ -559,6 +582,46 @@ end
 
   $fclose(out_file);
   //////////////////////////////////
+  
+
+  ////////// SFP output store to SRAM verification /////////
+  out_file = $fopen("out.txt", "r");  
+
+  // Following three lines are to remove the first three comment lines of the file
+  out_scan_file = $fscanf(out_file,"%s", answer); 
+  out_scan_file = $fscanf(out_file,"%s", answer); 
+  out_scan_file = $fscanf(out_file,"%s", answer); 
+
+  #0.5 clk = 1'b0;
+  A_pmem_sfp[9:0] = 0;
+  A_pmem = A_pmem_sfp;
+  #0.5 clk = 1'b1;
+
+  for (t=0; t<len_onij; t=t+1) begin
+	#0.5 clk = 1'b0; CEN_pmem = 0; WEN_pmem = 1;
+	if (t > 0) begin
+	  A_pmem_sfp = A_pmem_sfp + 1;
+	  A_pmem = A_pmem_sfp;
+	end
+	if (t > 1) begin
+	  A_pmem = A_pmem_sfp;
+          out_scan_file = $fscanf(out_file,"%128b", answer); // reading from out file to answer
+          if (core_instance.psum_sram.Q == answer) begin
+            $display("%2d-th output featuremap Data matched! :D", t); 
+          end else begin
+            $display("%2d-th output featuremap Data ERROR!!", t); 
+            $display("sfpout: %128b", core_instance.psum_sram.Q);
+            $display("answer: %128b", answer);
+            error = 1;
+          end
+
+	end
+	  #0.5 clk = 1'b1;
+  end
+
+  #0.5 clk = 1'b0; CEN_pmem = 1; WEN_pmem = 1; A_pmem = 0; pmem_mode = 0;
+  #0.5 clk = 1'b1;
+
 
   for (t=0; t<10; t=t+1) begin  
     #0.5 clk = 1'b0;  
