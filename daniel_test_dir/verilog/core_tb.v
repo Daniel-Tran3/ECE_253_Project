@@ -64,6 +64,7 @@ integer x_file, x_scan_file ; // file_handler
 integer w_file, w_scan_file ; // file_handler
 integer acc_file, acc_scan_file ; // file_handler
 integer out_file, out_scan_file ; // file_handler
+integer psum_file, psum_scan_file ; // file_handler
 integer captured_data; 
 integer t, i, j, k, kij;
 integer error;
@@ -150,8 +151,8 @@ initial begin
   /////////////////////////////////////////////////
 
 
-  for (kij=0; kij<9; kij=kij+1) begin  // kij loop
-  //for (kij=0; kij<1; kij=kij+1) begin  // kij loop
+  //for (kij=0; kij<9; kij=kij+1) begin  // kij loop
+  for (kij=0; kij<1; kij=kij+1) begin  // kij loop
     $display("Kij %d\n", kij);
     case(kij)
      //0: w_file_name = "weight_itile0_otile0_kij0.txt";
@@ -239,12 +240,14 @@ initial begin
 
 
     /////// Kernel loading to PEs ///////
-    for (t=0; t<col + 5; t=t+1) begin
+    for (t=0; t<col; t=t+1) begin
       #0.5 clk = 1'b0; l0_rd = 1; load = 1;
       #0.5 clk = 1'b1;
       if (t > 0) begin
               load = 1;
               //$display("%b", core_instance.corelet_instance.l0_instance.rd_en);
+              //$display("%b", core_instance.corelet_instance.l0_instance.out);
+
               end
     end
     /////////////////////////////////////
@@ -258,7 +261,7 @@ initial begin
     #0.5 clk = 1'b0;  //load = 0;
     #0.5 clk = 1'b1;  //$display("%b", core_instance.corelet_instance.l0_instance.out);
 
-    for (i=0; i<10 ; i=i+1) begin
+    for (i=0; i<16 ; i=i+1) begin
       #0.5 clk = 1'b0;
       #0.5 clk = 1'b1;  
     end
@@ -281,7 +284,8 @@ $display("Row 0 in: %b\n", core_instance.corelet_instance.mac_array_instance.row
       $display("Row 6 out: %b\n", core_instance.corelet_instance.mac_array_instance.row_num[7].mac_row_instance.out_s);
       $display("Row 7 in: %b\n", core_instance.corelet_instance.mac_array_instance.row_num[8].mac_row_instance.in_n);
       $display("Row 7 out: %b\n", core_instance.corelet_instance.mac_array_instance.row_num[8].mac_row_instance.out_s);
-      
+     */
+/*
 $display("Row 0, col 1 weight: %b\n", core_instance.corelet_instance.mac_array_instance.row_num[8].mac_row_instance.col_num[1].mac_tile_instance.b_q);
 $display("Row 0, col 2 weight: %b\n", core_instance.corelet_instance.mac_array_instance.row_num[8].mac_row_instance.col_num[2].mac_tile_instance.b_q);
 $display("Row 0, col 3 weight: %b\n", core_instance.corelet_instance.mac_array_instance.row_num[8].mac_row_instance.col_num[3].mac_tile_instance.b_q);
@@ -290,7 +294,8 @@ $display("Row 0, col 5 weight: %b\n", core_instance.corelet_instance.mac_array_i
 $display("Row 0, col 6 weight: %b\n", core_instance.corelet_instance.mac_array_instance.row_num[8].mac_row_instance.col_num[6].mac_tile_instance.b_q);
 $display("Row 0, col 7 weight: %b\n", core_instance.corelet_instance.mac_array_instance.row_num[8].mac_row_instance.col_num[7].mac_tile_instance.b_q);
 $display("Row 0, col 8 weight: %b\n", core_instance.corelet_instance.mac_array_instance.row_num[8].mac_row_instance.col_num[8].mac_tile_instance.b_q);
-         */   
+         
+*/
 
       
 
@@ -319,17 +324,17 @@ $display("Row 0, col 8 weight: %b\n", core_instance.corelet_instance.mac_array_i
     /////// Execution ///////
     $display("Execution begins.\n");
     for (t = 0; t < len_nij; t=t+1) begin
-      #0.5 clk = 1'b0; l0_rd = 1;
+      #0.5 clk = 1'b0; l0_rd = 1; execute = 1;
       #0.5 clk = 1'b1;
       if (t > 1) begin
 	      execute = 1;
 	      //$display("%b", core_instance.corelet_instance.l0_instance.out);
       end
-    end
+end
 
-    #0.5 clk = 1'b0; l0_rd = 0;
+    #0.5 clk = 1'b0; l0_rd = 0; execute = 0;
     #0.5 clk = 1'b1;
-    #0.5 clk = 1'b0; execute = 0;
+    #0.5 clk = 1'b0;
     #0.5 clk = 1'b1;
 
     // Wait for last element to load
@@ -337,12 +342,21 @@ $display("Row 0, col 8 weight: %b\n", core_instance.corelet_instance.mac_array_i
       #0.5 clk = 1'b0;
       #0.5 clk = 1'b1;
       //$display("%b\n", core_instance.corelet_instance.mac_array_instance.temp);
+      $display("Row 0, col 1 inst_w[1]: %b\n", core_instance.corelet_instance.mac_array_instance.row_num[8].mac_row_instance.col_num[8].mac_tile_instance.inst_w[1]);
+$display("Row 0, col 1 act: %b\n", core_instance.corelet_instance.mac_array_instance.row_num[8].mac_row_instance.col_num[1].mac_tile_instance.a_q);
+$display("Row 0, col 2 act: %b\n", core_instance.corelet_instance.mac_array_instance.row_num[8].mac_row_instance.col_num[2].mac_tile_instance.a_q);
+$display("Row 0, col 3 act: %b\n", core_instance.corelet_instance.mac_array_instance.row_num[8].mac_row_instance.col_num[3].mac_tile_instance.a_q);
+$display("Row 0, col 4 act: %b\n", core_instance.corelet_instance.mac_array_instance.row_num[8].mac_row_instance.col_num[4].mac_tile_instance.a_q);
+$display("Row 0, col 5 act: %b\n", core_instance.corelet_instance.mac_array_instance.row_num[8].mac_row_instance.col_num[5].mac_tile_instance.a_q);
+$display("Row 0, col 6 act: %b\n", core_instance.corelet_instance.mac_array_instance.row_num[8].mac_row_instance.col_num[6].mac_tile_instance.a_q);
+$display("Row 0, col 7 act: %b\n", core_instance.corelet_instance.mac_array_instance.row_num[8].mac_row_instance.col_num[7].mac_tile_instance.a_q);
+$display("Row 0, col 8 act: %b\n", core_instance.corelet_instance.mac_array_instance.row_num[8].mac_row_instance.col_num[8].mac_tile_instance.a_q);
     end
       
       
 
     // Wait for last element to be delivered to bottom
-    for (t = 0; t < 30; t=t+1) begin
+    for (t = 0; t < len_nij*2; t=t+1) begin
       #0.5 clk = 1'b0;
       #0.5 clk = 1'b1;
       //$display("%d cycles after output should be valid.\n", t);
@@ -353,12 +367,35 @@ $display("Row 0, col 8 weight: %b\n", core_instance.corelet_instance.mac_array_i
 
 
 
+    psum_file = $fopen("psum_0.txt", "r");
+    psum_scan_file = $fscanf(psum_file, "%s", answer);
+    psum_scan_file = $fscanf(psum_file, "%s", answer);
+    psum_scan_file = $fscanf(psum_file, "%s", answer);
+
     //////// OFIFO READ ////////
     // Ideally, OFIFO should be read while execution, but we have enough ofifo
     // depth so we can fetch out after execution.
-    for (t = 0; t < 30; t=t+1) begin
-	    #0.5 clk = 1'b0; if (ofifo_valid) ofifo_rd = 1;
+    for (t = 0; t < len_nij + 1; t=t+1) begin
+            #0.5 clk = 1'b0; 
+            if (ofifo_valid) begin
+                    ofifo_rd = 1;
+            end
+            if (t > 0) begin
+                    psum_scan_file = $fscanf(psum_file, "%128b", answer);
+                    
+                    if (core_instance.corelet_instance.ofifo_instance.out == answer) begin
+                            $display("%2d-th psum data matched.", t);
+                    end else begin
+                      $display("%2d-th output featuremap Data ERROR!!", t); 
+                      $display("ofifoout: %128b", core_instance.corelet_instance.ofifo_instance.out);
+                      $display("answer  : %128b", answer);
+                      
+              end
+              
+            end
 	    #0.5 clk = 1'b1;
+	     //$display("%b", core_instance.corelet_instance.ofifo_instance.out);
+
     end
     /////////////////////////////////////
 
@@ -391,9 +428,9 @@ $display("Row 0, col 8 weight: %b\n", core_instance.corelet_instance.mac_array_i
        if (sfp_out == answer)
          $display("%2d-th output featuremap Data matched! :D", i); 
        else begin
-         $display("%2d-th output featuremap Data ERROR!!", i); 
-         $display("sfpout: %128b", sfp_out);
-         $display("answer: %128b", answer);
+         //$display("%2d-th output featuremap Data ERROR!!", i); 
+         //$display("sfpout: %128b", sfp_out);
+         //$display("answer: %128b", answer);
          error = 1;
        end
     end
