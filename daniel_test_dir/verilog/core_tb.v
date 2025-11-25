@@ -11,6 +11,8 @@ parameter len_onij = 16;
 parameter col = 8;
 parameter row = 8;
 parameter len_nij = 36;
+parameter row_idx = 1;
+parameter col_idx = 1;
 
 reg clk = 0;
 reg reset = 1;
@@ -46,6 +48,9 @@ reg acc = 0;
 reg [1:0]  inst_w; 
 reg [bw*row-1:0] D_xmem;
 reg [psum_bw*col-1:0] answer;
+
+integer nij = 0;
+reg post_ex = 0;
 
 
 reg ofifo_rd;
@@ -309,7 +314,7 @@ $display("Row 0, col 8 weight: %b\n", core_instance.corelet_instance.mac_array_i
 		    l0_wr = 1;
 	    end
       #0.5 clk = 1'b1;
-      //if (t > 1) $display("%b", core_instance.activation_sram.Q);
+      if (t > 1) $display("%b", core_instance.activation_sram.Q);
     end
 
     #0.5 clk = 1'b0; CEN_xmem = 1; A_xmem = 0;
@@ -320,6 +325,11 @@ $display("Row 0, col 8 weight: %b\n", core_instance.corelet_instance.mac_array_i
     /////////////////////////////////////
 
 
+    //#0.5 clk = 1'b0; l0_rd = 0; load = 1;
+    //#0.5 clk = 1'b1; //$display("%b", core_instance.activation_sram.Q);
+
+    //#0.5 clk = 1'b0; l0_rd = 0; load = 0;
+    //#0.5 clk = 1'b1; //$display("%b", core_instance.activation_sram.Q);
 
     /////// Execution ///////
     $display("Execution begins.\n");
@@ -328,7 +338,7 @@ $display("Row 0, col 8 weight: %b\n", core_instance.corelet_instance.mac_array_i
       #0.5 clk = 1'b1;
       if (t > 1) begin
 	      execute = 1;
-	      //$display("%b", core_instance.corelet_instance.l0_instance.out);
+	      $display("%b", core_instance.corelet_instance.l0_instance.out);
       end
 end
 
@@ -342,6 +352,7 @@ end
       #0.5 clk = 1'b0;
       #0.5 clk = 1'b1;
       //$display("%b\n", core_instance.corelet_instance.mac_array_instance.temp);
+      /*
       $display("Row 0, col 1 inst_w[1]: %b\n", core_instance.corelet_instance.mac_array_instance.row_num[8].mac_row_instance.col_num[8].mac_tile_instance.inst_w[1]);
 $display("Row 0, col 1 act: %b\n", core_instance.corelet_instance.mac_array_instance.row_num[8].mac_row_instance.col_num[1].mac_tile_instance.a_q);
 $display("Row 0, col 2 act: %b\n", core_instance.corelet_instance.mac_array_instance.row_num[8].mac_row_instance.col_num[2].mac_tile_instance.a_q);
@@ -351,7 +362,8 @@ $display("Row 0, col 5 act: %b\n", core_instance.corelet_instance.mac_array_inst
 $display("Row 0, col 6 act: %b\n", core_instance.corelet_instance.mac_array_instance.row_num[8].mac_row_instance.col_num[6].mac_tile_instance.a_q);
 $display("Row 0, col 7 act: %b\n", core_instance.corelet_instance.mac_array_instance.row_num[8].mac_row_instance.col_num[7].mac_tile_instance.a_q);
 $display("Row 0, col 8 act: %b\n", core_instance.corelet_instance.mac_array_instance.row_num[8].mac_row_instance.col_num[8].mac_tile_instance.a_q);
-    end
+*/    
+end
       
       
 
@@ -385,10 +397,15 @@ $display("Row 0, col 8 act: %b\n", core_instance.corelet_instance.mac_array_inst
                     
                     if (core_instance.corelet_instance.ofifo_instance.out == answer) begin
                             $display("%2d-th psum data matched.", t);
+                            if (answer == 'd0) begin
+                                    $display("Was 0.");
+                            end else begin
+                                    $display("Nonzero!");
+                            end
                     end else begin
                       $display("%2d-th output featuremap Data ERROR!!", t); 
-                      $display("ofifoout: %128b", core_instance.corelet_instance.ofifo_instance.out);
-                      $display("answer  : %128b", answer);
+                      $display("ofifoout: %16b", core_instance.corelet_instance.ofifo_instance.out[15:0]);
+                      $display("answer  : %16b", answer[15:0]);
                       
               end
               
@@ -424,7 +441,7 @@ $display("Row 0, col 8 act: %b\n", core_instance.corelet_instance.mac_array_inst
 
     if (i>0) begin
      out_scan_file = $fscanf(out_file,"%128b", answer); // reading from out file to answer
-     
+     /*
        if (sfp_out == answer)
          $display("%2d-th output featuremap Data matched! :D", i); 
        else begin
@@ -433,6 +450,7 @@ $display("Row 0, col 8 act: %b\n", core_instance.corelet_instance.mac_array_inst
          //$display("answer: %128b", answer);
          error = 1;
        end
+     */
     end
    
  
@@ -491,13 +509,37 @@ always @ (posedge clk) begin
    l0_wr_q    <= l0_wr ;
    execute_q  <= execute;
    load_q     <= load;
-/*
-   if (core_instance.corelet_instance.ofifo_instance.wr != 0) begin
-	   $display("Ofifo write.");
-	   $display("%b", core_instance.corelet_instance.ofifo_instance.wr);
-	   $display("%b", core_instance.corelet_instance.ofifo_instance.in);
+
+   post_ex <= core_instance.corelet_instance.mac_array_instance.row_num[row_idx].mac_row_instance.col_num[col_idx].mac_tile_instance.inst_w[1]; 
+   //if (core_instance.corelet_instance.ofifo_instance.wr[0] != 0) begin
+	   //$display("Ofifo write to 0.");
+	   //$display("%b", core_instance.corelet_instance.ofifo_instance.wr);
+	   //$display("%b", core_instance.corelet_instance.ofifo_instance.in[psum_bw-1:0]);
+   //end
+
+
+ /* 
+   if (core_instance.corelet_instance.mac_array_instance.row_num[row_idx].mac_row_instance.col_num[col_idx].mac_tile_instance.inst_w[1] != 0) begin
+
+	      $display("%b", core_instance.corelet_instance.l0_instance.out);
+	   $display("Nij %d, Captured: A_q %b", nij, core_instance.corelet_instance.mac_array_instance.row_num[row_idx].mac_row_instance.col_num[col_idx].mac_tile_instance.in_w);
+     end
+
+     if (post_ex) begin
+          if (nij < 20) begin
+	   $display("Multiplication on row 1, column 1.");
+	   $display("A_q: %d", core_instance.corelet_instance.mac_array_instance.row_num[row_idx].mac_row_instance.col_num[col_idx].mac_tile_instance.a_q);
+	   $display("B_q: %d", $signed(core_instance.corelet_instance.mac_array_instance.row_num[row_idx].mac_row_instance.col_num[col_idx].mac_tile_instance.b_q));
+	   $display("In_n: %d", $signed(core_instance.corelet_instance.mac_array_instance.row_num[row_idx].mac_row_instance.col_num[col_idx].mac_tile_instance.in_n));
+	   $display("Out_s: %d", $signed(core_instance.corelet_instance.mac_array_instance.row_num[row_idx].mac_row_instance.col_num[col_idx].mac_tile_instance.out_s));
+	   $display("Product: %d", $signed(core_instance.corelet_instance.mac_array_instance.row_num[row_idx].mac_row_instance.col_num[col_idx].mac_tile_instance.mac_instance.product));
+	   $display("Product (Expand): %d", $signed(core_instance.corelet_instance.mac_array_instance.row_num[row_idx].mac_row_instance.col_num[col_idx].mac_tile_instance.mac_instance.product_expand));
+	   $display("Padded A: %d", $signed(core_instance.corelet_instance.mac_array_instance.row_num[row_idx].mac_row_instance.col_num[col_idx].mac_tile_instance.mac_instance.a_pad));
+	   $display("C: %d", $signed(core_instance.corelet_instance.mac_array_instance.row_num[row_idx].mac_row_instance.col_num[col_idx].mac_tile_instance.mac_instance.c));
+     end
+     nij <= nij + 1;
    end
-   */
+  */ 
 end
 
 

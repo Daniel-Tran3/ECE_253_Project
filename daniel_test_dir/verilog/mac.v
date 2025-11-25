@@ -5,20 +5,22 @@ module mac (out, a, b, c);
 parameter bw = 4;
 parameter psum_bw = 16;
 
-output signed [psum_bw-1:0] out;
-input signed  [bw-1:0] a;  // activation
-input signed  [bw-1:0] b;  // weight
-input signed  [psum_bw-1:0] c;
+output [psum_bw-1:0] out;
+input  [bw-1:0] a;  // activation
+input  [bw-1:0] b;  // weight
+input  [psum_bw-1:0] c;
 
 
-wire signed [2*bw:0] product;
-wire signed [psum_bw-1:0] psum;
-wire signed [bw:0]   a_pad;
+wire [2*bw:0] product;
+wire [psum_bw-1:0] psum;
+wire [bw:0]   a_pad;
+wire [psum_bw-1:0] product_expand;
 
 assign a_pad = {1'b0, a}; // force to be unsigned number
 assign product = a_pad * b;
+assign product_expand = {{bw{1'b0}}, a} * {{bw{b[bw-1]}}, b}; 
 
-assign psum = product + c;
+assign psum = {{8{product_expand[2*bw-1]}}, product_expand[2*bw-1:0]} + c;
 assign out = psum;
 
 endmodule
