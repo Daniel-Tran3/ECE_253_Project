@@ -1,9 +1,10 @@
-module sfp (clk, reset, in_psum, valid_in, out_accum, wr_ofifo, o_valid);
+module sfp (clk, reset, in_psum, valid_in, out_accum, wr_ofifo, o_valid, relu_en);
     parameter col = 8;
     parameter psum_bw = 16;
 
     input  clk;
     input  reset;
+    input  relu_en;
     input  [psum_bw*col-1:0] in_psum;   // input from last row MAC array
     input  [col-1:0] valid_in;          // one bit per column indicating valid in_psum
     output wire [psum_bw*col-1:0] out_accum;    // concatenated of accum & relu outputs for all columns
@@ -33,12 +34,16 @@ module sfp (clk, reset, in_psum, valid_in, out_accum, wr_ofifo, o_valid);
                     //    next_val = acc_reg[k] + in_val;
 
                     //acc_reg[k] <= next_val;
-		    acc_reg[k] <= (valid_in[k]) ? acc_reg[k] + in_psum[(k+1)*psum_bw-1:k*psum_bw] : acc_reg[k];
+		    if (valid_in[k]) begin
+			    acc_reg[k] <= (relu_en && (acc_reg[k] + in_psum[(k+1)*psum_bw-1:k*psum_bw] < 0)) ? 0 : acc_reg[k] + in_psum[(k+1)*psum_bw-1:k*psum_bw];
+		    end else begin 
+		    	acc_reg[k] <= (relu_en && acc_reg[k] < 0) ? 0 : acc_reg[k];
+			end
                 end
             end
 
             // output mapping & ReLU
-            assign out_accum[(k+1)*psum_bw-1 : k*psum_bw] = (acc_reg[k] < 0) ? 0 : acc_reg[k];
+            assign out_accum[(k+1)*psum_bw-1 : k*psum_bw] = acc_reg[k];
 
 
         end

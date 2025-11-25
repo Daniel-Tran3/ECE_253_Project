@@ -1,4 +1,4 @@
-module core (clk, inst, ofifo_valid, D_xmem, sfp_out, xw_mode, reset, sfp_reset);
+module core (clk, inst, ofifo_valid, D_xmem, sfp_out, xw_mode, reset, sfp_reset,, relu_en, pmem_mode);
 
   parameter bw = 4;
   parameter psum_bw = 16;
@@ -9,6 +9,8 @@ module core (clk, inst, ofifo_valid, D_xmem, sfp_out, xw_mode, reset, sfp_reset)
   input [33:0] inst;
   input [row*bw-1:0] D_xmem;
   input xw_mode; // x if 0, w if 1
+  input pmem_mode; // write from OFIFO if 0, write from SFP if 1
+  input relu_en;
 
   output [psum_bw*col-1:0] sfp_out;
   output ofifo_valid;
@@ -18,8 +20,13 @@ module core (clk, inst, ofifo_valid, D_xmem, sfp_out, xw_mode, reset, sfp_reset)
   wire [row*bw-1:0] w_sram_output;
   wire [col*psum_bw-1:0] psum_sram_output;
   wire [col*psum_bw-1:0] ofifo_output;
+  wire [col*psum_bw-1:0] pmem_input;
+
+  reg  [col*psum_bw-1:0] sfp_out_q;
 
   assign l0_input = ({row*bw{!xw_mode}} & act_sram_output) |  ({row*bw{xw_mode}} & w_sram_output);
+
+  assign pmem_input = ({col*psum_bw{!pmem_mode}} & ofifo_output) | ({col*psum_bw{pmem_mode}} & sfp_out_q);
 
   corelet #(.bw(bw), .psum_bw(psum_bw), .row(row), .col(col)) corelet_instance (
     .clk(clk),
@@ -28,9 +35,11 @@ module core (clk, inst, ofifo_valid, D_xmem, sfp_out, xw_mode, reset, sfp_reset)
     .ofifo_valid(ofifo_valid),
     .l0_input(l0_input),
     .ofifo_output(ofifo_output),
+    .sfp_input(psum_sram_output),
     .sfp_out(sfp_out),
     .xw_mode(xw_mode),
-    .sfp_reset(sfp_reset)
+    .sfp_reset(sfp_reset),
+    .relu_en(relu_en)
   );
 
 
@@ -56,10 +65,14 @@ module core (clk, inst, ofifo_valid, D_xmem, sfp_out, xw_mode, reset, sfp_reset)
     .CLK(clk),
     .WEN(inst[31]),
     .CEN(inst[32]),
-    .D(ofifo_output),
+    .D(pmem_input),
     .A(inst[30:20]),
     .Q(psum_sram_output)
   );
+
+  always @(posedge clk) begin
+	  sfp_out_q <= sfp_out;
+  end
 
 
 endmodule

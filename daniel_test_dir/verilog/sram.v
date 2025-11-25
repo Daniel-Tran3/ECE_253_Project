@@ -15,7 +15,9 @@ module sram (CLK, D, Q, CEN, WEN, A);
 
   reg [WIDTH-1:0] memory [SIZE-1:0];
   reg [ADD_WIDTH-1:0] add_q;
+  wire [WIDTH-1:0] mem_1024;
   assign Q = memory[add_q];
+  assign mem_1024 = memory[1024];
 
   always @ (posedge CLK) begin
 
