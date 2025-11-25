@@ -1,55 +1,58 @@
-module sfp (clk, reset, in_psum, valid_in, out_accum, wr_ofifo, o_valid);
+module sfp (clk, reset, valid_in, relu_enable, l1_read_data, accum_out, write_enable);
     parameter col = 8;
     parameter psum_bw = 16;
 
     input  clk;
     input  reset;
-    input  [psum_bw*col-1:0] in_psum;   // input from last row MAC array
-    input  [col-1:0] valid_in;          // one bit per column indicating valid in_psum
-    output wire [psum_bw*col-1:0] out_accum;    // concatenated of accum & relu outputs for all columns
-    output wire [col-1:0] wr_ofifo;     // write enable per column of output FIFO
-    output wire o_valid;                // high when any column has valid data
+    input  valid_in;        // indicates accumulation
+    input  relu_enable;         // enables ReLU activation before output
+    input  [psum_bw*col-1:0] l1_read_data;      // packed bus contained col values, each psum bits wide
+    output reg [psum_bw*col-1:0] accum_out;     // packed accumulated result
+    output reg write_enable;        // control signal
 
-    reg signed [psum_bw-1:0] acc_reg [0:col-1];     // signed reg to hold accumulated psum values
-    reg        [col-1:0]     wr_reg;                // register to hold write enable for each column
+    // Internal accumulation storage
+    reg signed [psum_bw-1:0] acc_reg [0:col-1];
 
-    assign wr_ofifo = wr_reg;
-    assign o_valid  = |wr_reg;
+    // Wires to hold unpacked L1 data
+    wire signed [psum_bw-1:0] l1_vec [0:col-1];
 
+    // Unpack L1 data using genvar k  
     genvar k;
     generate
-        for (k = 0; k < col; k = k + 1) begin : COLUMN
-            reg signed [psum_bw-1:0] next_val;              // compute next accumulator value includin RELU
-            //wire signed [psum_bw-1:0] in_val = in_psum[(k+1)*psum_bw-1 : k*psum_bw];    // extract column k psum
-
-            always @(posedge clk or posedge reset) begin
-                if (reset) begin
-                    acc_reg[k] <= 0;        // reset accumulator to 0 on reset
-                end else begin
-                    //next_val = acc_reg[k];      // initialize next_val to current accumulator value
-
-                    // Accumulation
-                    //if (valid_in[k])
-                    //    next_val = acc_reg[k] + in_val;
-
-                    //acc_reg[k] <= next_val;
-		    acc_reg[k] <= (valid_in[k]) ? acc_reg[k] + in_psum[(k+1)*psum_bw-1:k*psum_bw] : acc_reg[k];
-                end
-            end
-
-            // output mapping & ReLU
-            assign out_accum[(k+1)*psum_bw-1 : k*psum_bw] = (acc_reg[k] < 0) ? 0 : acc_reg[k];
-
-
+        for (k = 0; k < col; k = k + 1) begin : UNPACK
+            assign l1_vec[k] = l1_read_data[(k+1)*psum_bw-1 : k*psum_bw];
         end
     endgenerate
 
-    // wr_ofifo and o_valid registers
+    // Accumulate using integer loop  
+    integer i;
     always @(posedge clk or posedge reset) begin
-        if (reset)
-            wr_reg <= 0;
-        else
-            wr_reg <= valid_in;
+        if (reset) begin
+            for (i = 0; i < col; i = i + 1)
+                acc_reg[i] <= 0;
+
+            write_enable <= 0;
+        end
+        else begin
+            write_enable <= valid_in;
+
+            if (valid_in) begin
+                for (i = 0; i < col; i = i + 1)
+                    acc_reg[i] <= acc_reg[i] + l1_vec[i];
+            end
+        end
     end
+
+    // Pack outputs
+    generate
+        for (k = 0; k < col; k = k + 1) begin : PACK
+            always @(*) begin
+                if (relu_enable && acc_reg[k] < 0)
+                    accum_out[(k+1)*psum_bw-1 : k*psum_bw] = 0;
+                else
+                    accum_out[(k+1)*psum_bw-1 : k*psum_bw] = acc_reg[k];
+            end
+        end
+    endgenerate
 
 endmodule

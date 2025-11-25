@@ -29,8 +29,10 @@ wire [col*psum_bw-1:0] mac_output;
 wire [col*psum_bw-1:0] sfp_output;
 wire [col-1:0] mac_array_valid_o;
 wire [col-1:0] sfp_valid_o;
+reg [3*col-1:0] shift_mac_array_valid_o_q;
 
 assign sfp_out = sfp_output;
+
 
 // MAC array
   mac_array #(.bw(bw), .psum_bw(psum_bw)) mac_array_instance (
@@ -72,11 +74,17 @@ assign sfp_out = sfp_output;
     .in(mac_output),   // SFU output
     .out(ofifo_output),
     .rd(inst[6]),       // read enable
-    .wr(mac_array_valid_o),        // write enable from SFU
+    //.wr(mac_array_valid_o),        // write enable from SFU
+    .wr(shift_mac_array_valid_o_q[1*col-1:0*col]),
     .o_full(ofifo_full),
     .reset(reset),
     .o_ready(ofifo_ready),
     .o_valid(ofifo_valid)
   );
 
+  always @(posedge clk) begin
+	shift_mac_array_valid_o_q[col-1:0] <= mac_array_valid_o;
+	shift_mac_array_valid_o_q[2*col-1:col] <= shift_mac_array_valid_o_q[col-1:0];
+	shift_mac_array_valid_o_q[3*col-1:2*col] <= shift_mac_array_valid_o_q[2*col-1:col];
+end
 endmodule
