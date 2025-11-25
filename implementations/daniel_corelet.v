@@ -9,11 +9,20 @@ input clk, reset;
 input [33:0] inst_q;
 input [row*bw-1:0] l0_input;
 
+// L1 interface (external)
+input  [col*psum_bw-1:0] l1_read_data;      // data read from external L1
+output [col*psum_bw-1:0] l1_write_data;     // data to write back into L1
+output [col-1:0] l1_write_enable;   // one bit per column to control L1 write
+
+// OFIFO outputs
 output [col*psum_bw-1:0] ofifo_output;
 output ofifo_valid;
 
-wire [col-1:0] ofifo_wr;
-wire [row*bw-1:0] l0_output;
+// Internal wires
+wire [col-1:0] mac_valid;                   // per-column valid from MAC array
+wire [col*psum_bw-1:0] mac_output;          // staggered psums from MAC array (write into OFIFO)
+wire [col*psum_bw-1:0] ofifo_input;         // connected to MAC outputs
+wire [col-1:0] ofifo_wr;                   // per-column write enables into OFIFO
 
 wire ofifo_ready;
 wire ofifo_full;
@@ -21,18 +30,18 @@ wire ofifo_full;
 wire l0_ready;
 wire l0_full;
 
-wire [col*psum_bw-1:0] mac_output;
-wire [col*psum_bw-1:0] sfp_output;
+assign ofifo_input = mac_output;
+assign ofifo_wr    = mac_valid;
 
 // MAC array
   mac_array #(.bw(bw), .psum_bw(psum_bw)) mac_array_instance (
     .clk(clk),
     .reset(reset),
-    .out_s(mac_output),    // output connected to SFU
+    .out_s(mac_output),    // staggered psums from last row (to OFIFO)
     .in_w(l0_output), // I'm not sure if this is safe, or needs to be guarded by a control bit to make sure that l0_output is currently in weight loading mode.
-    .in_n({psum_bw*col{1'b0}}),
+    .in_n({psum_bw*col{1'b0}}), // no feedback psum into MAC (L1 handled externally)
     .inst_w({inst_q[1], inst_q[0]}),  // instruction for MAC (kernel loading / execute)
-    .valid(ofifo_wr)    // output valid for each column
+    .valid(mac_valid)      // per-column valid signals (for OFIFO writes)
   );
 
 // L0 scratchpad (input activations)
@@ -48,26 +57,35 @@ wire [col*psum_bw-1:0] sfp_output;
   );
 
 // SFU: accumulate + relu
-  sfp #(.col(col), .psum_bw(psum_bw)) sfp_instance (
-      .clk(clk),
-      .reset(reset),
-      .in_psum(mac_output),    // MAC outputs connected to SFU input
-      .valid_in(ofifo_wr),      // MAC output valid
-      .out_accum(sfp_output),   // SFP output (accum + relu) connected to OFIFO input
-      .wr_ofifo(ofifo_wr),     // write enable for OFIFO
-      .o_valid(ofifo_valid)
-    );
+  wire [col*psum_bw-1:0] sfp_accum_out;
+  wire [col-1:0] sfp_write_enable;
 
+  sfp #(.col(col), .psum_bw(psum_bw)) sfp_instance (
+    .clk(clk),
+    .reset(reset),
+    .psum_in(mac_output),        // MAC outputs
+    .l1_read_data(l1_read_data), // previous partial sums from L1
+    .ofifo_valid(mac_valid),     // valid signals from MAC (per-column)
+    .relu_enable(inst_q[6]),     // control signal for final pass
+    .accum_out(sfp_accum_out),   // output after accumulation + ReLU
+    .write_enable(sfp_write_enable) // write enable per column
+  );
+
+// OFIFO
   ofifo #(.col(col), .bw(psum_bw)) ofifo_instance (
     .clk(clk),
-    .in(sfp_output),   // SFU output
-    .out(ofifo_output),
-    .rd(inst_q[6]),       // read enable
-    .wr(ofifo_wr),        // write enable from SFU
+    .in(sfp_accum_out),     // take SFP output
+    .out(ofifo_output),     // aligned row out
+    .rd(inst_q[6]),         // read enable
+    .wr(sfp_write_enable),  // use SFP write enable
     .o_full(ofifo_full),
     .reset(reset),
     .o_ready(ofifo_ready),
     .o_valid(ofifo_valid)
-  );
+);
+
+// L1 write
+  assign l1_write_data   = sfp_accum_out;
+  assign l1_write_enable = sfp_write_enable;
 
 endmodule
