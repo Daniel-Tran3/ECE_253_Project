@@ -5,13 +5,14 @@
 module core_tb;
 
 parameter bw = 4;
-parameter psum_bw = 16;
+parameter psum_bw = 32;
+parameter psum_bw2 = 16;
 parameter len_kij = 9;
 parameter len_onij = 16;
 parameter col = 8;
 parameter row = 8;
 parameter len_nij = 36;
-parameter row_idx = 5;
+parameter row_idx = 8;
 parameter col_idx = 1;
 parameter o_ni_dim = 4;
 parameter a_pad_ni_dim = 6;
@@ -25,6 +26,7 @@ wire [33:0] inst_q;
 
 reg xw_mode = 0; // x if 0, w if 1
 reg pmem_mode = 0; // write from OFIFO if 0, write from SFP if 1
+reg act_mode = 1; // 4 bits if 0, 2 bits if 1
 reg [1:0]  inst_w_q = 0; 
 reg [bw*row-1:0] D_xmem_q = 0;
 reg CEN_xmem = 1;
@@ -98,7 +100,7 @@ assign inst_q[1]   = execute_q;
 assign inst_q[0]   = load_q; 
 
 
-core  #(.bw(bw), .col(col), .row(row)) core_instance (
+core  #(.bw(bw), .psum_bw2(psum_bw2), .psum_bw(psum_bw), .col(col), .row(row)) core_instance (
 	.clk(clk), 
 	.inst(inst_q),
 	.ofifo_valid(ofifo_valid),
@@ -108,7 +110,8 @@ core  #(.bw(bw), .col(col), .row(row)) core_instance (
 	.reset(reset),
 	.sfp_reset(sfp_reset),
 	.relu_en(relu_en_q),
-	.pmem_mode(pmem_mode)); 
+	.pmem_mode(pmem_mode),
+	.act_mode(act_mode)); 
 
 
 initial begin 
@@ -126,6 +129,7 @@ initial begin
   execute  = 0;
   load     = 0;
   pmem_mode = 0;
+  act_mode = 1;
 
   $dumpfile("core_tb.vcd");
   $dumpvars(0,core_tb);
@@ -172,8 +176,8 @@ initial begin
   /////////////////////////////////////////////////
 
 
+  //for (kij=0; kij<9; kij=kij+1) begin  // kij loop
   for (kij=0; kij<9; kij=kij+1) begin  // kij loop
-  //for (kij=0; kij<2; kij=kij+1) begin  // kij loop
     $display("Kij %d\n", kij);
     case(kij)
      //0: w_file_name = "weight_itile0_otile0_kij0.txt";
@@ -667,22 +671,23 @@ always @ (posedge clk) begin
 	   $display("Nij %d, Captured: A_q %b", nij, core_instance.corelet_instance.mac_array_instance.row_num[row_idx].mac_row_instance.col_num[col_idx].mac_tile_instance.in_w);
      end
 
-     if (post_ex && kij > 0) begin
+     if (post_ex) begin
           if (nij == 7) begin
 	   $display("Multiplication on row 1, column 1.");
 	   $display("A_q: %d", core_instance.corelet_instance.mac_array_instance.row_num[row_idx].mac_row_instance.col_num[col_idx].mac_tile_instance.a_q);
 	   $display("B_q: %d", $signed(core_instance.corelet_instance.mac_array_instance.row_num[row_idx].mac_row_instance.col_num[col_idx].mac_tile_instance.b_q));
 	   $display("In_n: %d", $signed(core_instance.corelet_instance.mac_array_instance.row_num[row_idx].mac_row_instance.col_num[col_idx].mac_tile_instance.in_n));
 	   $display("Out_s: %d", $signed(core_instance.corelet_instance.mac_array_instance.row_num[row_idx].mac_row_instance.col_num[col_idx].mac_tile_instance.out_s));
-	   $display("Product: %d", $signed(core_instance.corelet_instance.mac_array_instance.row_num[row_idx].mac_row_instance.col_num[col_idx].mac_tile_instance.mac_instance.product));
-	   $display("Product (Expand): %d", $signed(core_instance.corelet_instance.mac_array_instance.row_num[row_idx].mac_row_instance.col_num[col_idx].mac_tile_instance.mac_instance.product_expand));
+	   $display("Product: %d", $signed(core_instance.corelet_instance.mac_array_instance.row_num[row_idx].mac_row_instance.col_num[col_idx].mac_tile_instance.mac_instance.product2_1));
+	   $display("Product (Expand): %d", $signed(core_instance.corelet_instance.mac_array_instance.row_num[row_idx].mac_row_instance.col_num[col_idx].mac_tile_instance.mac_instance.product2_2));
 	   $display("Padded A: %d", $signed(core_instance.corelet_instance.mac_array_instance.row_num[row_idx].mac_row_instance.col_num[col_idx].mac_tile_instance.mac_instance.a_pad));
 	   $display("C: %d", $signed(core_instance.corelet_instance.mac_array_instance.row_num[row_idx].mac_row_instance.col_num[col_idx].mac_tile_instance.mac_instance.c));
+	   $display("Act mode: %d", $signed(core_instance.corelet_instance.mac_array_instance.row_num[row_idx].mac_row_instance.col_num[col_idx].mac_tile_instance.mac_instance.act_mode));
      end
 
      nij <= nij + 1;
    end
-  */
+*/  
 end
 
 

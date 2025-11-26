@@ -2,6 +2,7 @@ module corelet (clk, reset, inst, l0_input, ofifo_valid, ofifo_output, xw_mode, 
 
 parameter bw = 4;
 parameter psum_bw = 16;
+parameter psum_bw2 = 8;
 parameter row = 8;
 parameter col = 8;
 
@@ -38,7 +39,7 @@ assign sfp_out = sfp_output;
 
 
 // MAC array
-  mac_array #(.bw(bw), .psum_bw(psum_bw)) mac_array_instance (
+  mac_array #(.bw(bw), .psum_bw(psum_bw), .psum_bw2(psum_bw2)) mac_array_instance (
     .clk(clk),
     .reset(reset),
     .out_s(mac_output),    // output connected to SFU
@@ -63,7 +64,7 @@ assign sfp_out = sfp_output;
   );
 
 // SFU: accumulate + relu
-  sfp #(.col(col), .psum_bw(psum_bw)) sfp_instance (
+  sfp #(.col(col), .psum_bw(psum_bw), .psum_bw2(psum_bw2)) sfp_instance (
       .clk(clk),
       .reset(sfp_reset),
       .in_psum(sfp_input),    // MAC outputs connected to SFU input

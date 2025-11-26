@@ -4,6 +4,7 @@ module mac_array (clk, reset, out_s, in_w, in_n, inst_w, valid, act_mode);
 
   parameter bw = 4;
   parameter psum_bw = 16;
+  parameter psum_bw2 = 8;
   parameter col = 8;
   parameter row = 8;
 
@@ -30,7 +31,7 @@ module mac_array (clk, reset, out_s, in_w, in_n, inst_w, valid, act_mode);
   generate
 
   for (i=1; i < row+1 ; i=i+1) begin : row_num
-      mac_row #(.bw(bw), .psum_bw(psum_bw)) mac_row_instance (
+      mac_row #(.bw(bw), .psum_bw(psum_bw), .psum_bw2(psum_bw2)) mac_row_instance (
          .clk(clk),
          .reset(reset),
 	 .in_w(in_w[bw*i-1:bw*(i-1)]),

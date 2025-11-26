@@ -1,9 +1,10 @@
 // Created by prof. Mingu Kang @VVIP Lab in UCSD ECE department
 // Please do not spread this code without permission 
-module mac_tile (clk, out_s, in_w, out_e, in_n, inst_w, inst_e, reset);
+module mac_tile (clk, out_s, in_w, out_e, in_n, inst_w, inst_e, reset, act_mode);
 
 parameter bw = 4;
 parameter psum_bw = 16;
+parameter psum_bw2 = 8;
 
 output [psum_bw-1:0] out_s;
 input  act_mode;
@@ -19,7 +20,7 @@ reg    [bw-1:0] a_q;
 reg    [bw-1:0] b_q;
 reg    [psum_bw-1:0] c_q;
 reg             load_ready_q;
-mac #(.bw(bw), .psum_bw(psum_bw)) mac_instance (
+mac #(.bw(bw), .psum_bw(psum_bw), .psum_bw2(psum_bw2)) mac_instance (
         .a(a_q), 
         .b(b_q),
         .c(c_q),

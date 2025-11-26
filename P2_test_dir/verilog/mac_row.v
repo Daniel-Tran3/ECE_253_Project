@@ -4,6 +4,7 @@ module mac_row (clk, out_s, in_w, in_n, valid, inst_w, reset, act_mode);
 
   parameter bw = 4;
   parameter psum_bw = 16;
+  parameter psum_bw2 = 8;
   parameter col = 8;
 
   input  clk, reset;
@@ -23,7 +24,7 @@ module mac_row (clk, out_s, in_w, in_n, valid, inst_w, reset, act_mode);
   genvar i;
   generate
   for (i=1; i < col+1 ; i=i+1) begin : col_num
-      mac_tile #(.bw(bw), .psum_bw(psum_bw)) mac_tile_instance (
+      mac_tile #(.bw(bw), .psum_bw(psum_bw), .psum_bw2(psum_bw2)) mac_tile_instance (
          .clk(clk),
          .reset(reset),
 	 .in_w( temp[bw*i-1:bw*(i-1)]),

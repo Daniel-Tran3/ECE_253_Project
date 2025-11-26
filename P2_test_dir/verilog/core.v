@@ -2,6 +2,7 @@ module core (clk, inst, ofifo_valid, D_xmem, sfp_out, xw_mode, reset, sfp_reset,
 
   parameter bw = 4;
   parameter psum_bw = 16;
+  parameter psum_bw2 = 8;
   parameter col = 8;
   parameter row = 8;
   
@@ -29,7 +30,7 @@ module core (clk, inst, ofifo_valid, D_xmem, sfp_out, xw_mode, reset, sfp_reset,
 
   assign pmem_input = ({col*psum_bw{!pmem_mode}} & ofifo_output) | ({col*psum_bw{pmem_mode}} & sfp_out_q);
 
-  corelet #(.bw(bw), .psum_bw(psum_bw), .row(row), .col(col)) corelet_instance (
+  corelet #(.bw(bw), .psum_bw(psum_bw), .psum_bw2(psum_bw2), .row(row), .col(col)) corelet_instance (
     .clk(clk),
     .reset(reset),
     .inst(inst),
