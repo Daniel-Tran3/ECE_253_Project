@@ -7,7 +7,8 @@ module core_tb;
 parameter bw = 4;
 parameter psum_bw = 16;
 parameter len_kij = 9;
-parameter len_onij = 16;
+parameter len_onij = 8;
+//parameter len_onij = 16;
 parameter col = 8;
 parameter row = 8;
 parameter len_nij = 36;
@@ -16,6 +17,7 @@ parameter col_idx = 1;
 parameter o_ni_dim = 4;
 parameter a_pad_ni_dim = 6;
 parameter ki_dim = 3;
+parameter input_channels = 8;
 
 reg clk = 0;
 reg reset = 1;
@@ -155,7 +157,7 @@ initial begin
 
   /////// Activation data writing to memory ///////
   //for (t=0; t<len_nij; t=t+1) begin  
-  for (t=0; t<len_nij; t=t+1) begin  
+  for (t=0; t<input_channels; t=t+1) begin  
     #0.5 clk = 1'b0;  x_scan_file = $fscanf(x_file,"%32b", D_xmem); WEN_xmem = 0; CEN_xmem = 0; if (t>0) A_xmem = A_xmem + 1;
     //$display("%d", core_instance.activation_sram.A);
     //$display("%b", core_instance.activation_sram.D);
@@ -248,7 +250,7 @@ initial begin
 
     A_xmem = 11'b10000000000; xw_mode = 1;
 
-    for (t=0; t<col; t=t+1) begin  
+    for (t=0; t<row; t=t+1) begin  
       #0.5 clk = 1'b0;  w_scan_file = $fscanf(w_file,"%32b", D_xmem); WEN_xmem = 0; CEN_xmem = 0; if (t>0) A_xmem = A_xmem + 1;
       //$display("%b", D_xmem); 
       //$display("%b", core_instance.weight_sram.D);
@@ -263,7 +265,7 @@ initial begin
 
     /////// Kernel data writing to L0 ///////
     A_xmem = 11'b10000000000;  xw_mode = 1;
-    for (t=0; t<col; t=t+1) begin
+    for (t=0; t<row; t=t+1) begin
 	    #0.5 clk = 1'b0; CEN_xmem = 0;
 	    if (t > 0)  begin
 		    A_xmem = A_xmem + 1; 
@@ -284,7 +286,7 @@ initial begin
 
 
     /////// Kernel loading to PEs ///////
-    for (t=0; t<col; t=t+1) begin
+    for (t=0; t<row; t=t+1) begin
       #0.5 clk = 1'b0; l0_rd = 1; load = 1;
       #0.5 clk = 1'b1;
       if (t > 0) begin
@@ -346,7 +348,8 @@ $display("Row 0, col 8 weight: %b\n", core_instance.corelet_instance.mac_array_i
 
     /////// Activation data writing to L0 ///////
     A_xmem = 11'b00000000000;  xw_mode = 0;
-    for (t=0; t<len_nij; t=t+1) begin
+    //for (t=0; t<len_nij; t=t+1) begin
+    for (t = 0; t < in_channels; t=t+1) begin
 	    #0.5 clk = 1'b0; CEN_xmem = 0;
 	    if (t > 0) begin
 		    A_xmem = A_xmem + 1;
@@ -374,7 +377,8 @@ $display("Row 0, col 8 weight: %b\n", core_instance.corelet_instance.mac_array_i
 
     /////// Execution ///////
     $display("Execution begins.\n");
-    for (t = 0; t < len_nij; t=t+1) begin
+    //for (t = 0; t < len_nij; t=t+1) begin
+    for (t = 0; t < in_channels; t=t+1) begin
       #0.5 clk = 1'b0; l0_rd = 1; execute = 1;
       #0.5 clk = 1'b1;
       if (t > 1) begin
@@ -409,7 +413,8 @@ end
       
 
     // Wait for last element to be delivered to bottom
-    for (t = 0; t < len_nij*2; t=t+1) begin
+    //for (t = 0; t < len_nij*2; t=t+1) begin
+    for (t = 0; t < in_channels*2; t=t+1) begin
       #0.5 clk = 1'b0;
       #0.5 clk = 1'b1;
       //$display("%d cycles after output should be valid.\n", t);
