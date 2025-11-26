@@ -35,7 +35,8 @@ module sfp (clk, reset, in_psum, valid_in, out_accum, wr_ofifo, o_valid, relu_en
 
                     //acc_reg[k] <= next_val;
 		    if (valid_in[k]) begin
-			    acc_reg[k] <= (relu_en && (acc_reg[k] + in_psum[(k+1)*psum_bw-1:k*psum_bw] < 0)) ? 0 : acc_reg[k] + in_psum[(k+1)*psum_bw-1:k*psum_bw];
+			    //acc_reg[k] <= (relu_en && (acc_reg[k] + in_psum[(k+1)*psum_bw-1:k*psum_bw] < 0)) ? 0 : acc_reg[k] + in_psum[(k+1)*psum_bw-1:k*psum_bw];
+			    acc_reg[k] <= acc_reg[k] + in_psum[(k+1)*psum_bw-1:k*psum_bw];
 		    end else begin 
 		    	acc_reg[k] <= (relu_en && acc_reg[k] < 0) ? 0 : acc_reg[k];
 			end
@@ -43,7 +44,7 @@ module sfp (clk, reset, in_psum, valid_in, out_accum, wr_ofifo, o_valid, relu_en
             end
 
             // output mapping & ReLU
-            assign out_accum[(k+1)*psum_bw-1 : k*psum_bw] = acc_reg[k];
+            assign out_accum[(k+1)*psum_bw-1 : k*psum_bw] = ((acc_reg[k] < 0)) ? 0 : acc_reg[k];
 
 
         end
