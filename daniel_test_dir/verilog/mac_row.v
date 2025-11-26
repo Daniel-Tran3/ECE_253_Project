@@ -37,7 +37,7 @@ module mac_row (clk, out_s, in_w, in_n, valid, inst_w, reset);
   endgenerate
 
   generate
-    for (j=1; j < col+1; j = j+ 1) begin
+    for (j=1; j < col+1; j = j+ 1) begin : valid_loop
       assign valid[j-1] = temp_inst_w[2*(j+1)-1];
     end
   endgenerate
