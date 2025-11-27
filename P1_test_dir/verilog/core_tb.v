@@ -597,8 +597,13 @@ end
   A_pmem = A_pmem_sfp;
   #0.5 clk = 1'b1;
 
-  for (t=0; t<len_onij; t=t+1) begin
-	#0.5 clk = 1'b0; CEN_pmem = 0; WEN_pmem = 1;
+  for (t=0; t<len_onij+2; t=t+1) begin
+	#0.5 clk = 1'b0; 
+	if (t<len_onij) begin
+		CEN_pmem = 0; WEN_pmem = 1;
+	end else begin
+		CEN_pmem = 1; WEN_pmem = 1;
+	end
 	if (t > 0) begin
 	  A_pmem_sfp = A_pmem_sfp + 1;
 	  A_pmem = A_pmem_sfp;
@@ -607,9 +612,9 @@ end
 	  A_pmem = A_pmem_sfp;
           out_scan_file = $fscanf(out_file,"%128b", answer); // reading from out file to answer
           if (core_instance.psum_sram.Q == answer) begin
-            $display("%2d-th output featuremap Data matched! :D", t); 
+            $display("%2d-th output featuremap Data matched! :D", t-1); 
           end else begin
-            $display("%2d-th output featuremap Data ERROR!!", t); 
+            $display("%2d-th output featuremap Data ERROR!!", t-1); 
             $display("sfpout: %128b", core_instance.psum_sram.Q);
             $display("answer: %128b", answer);
             error = 1;
