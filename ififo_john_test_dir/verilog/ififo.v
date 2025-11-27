@@ -1,11 +1,11 @@
-module ififo (clk, in, out, push, pop, i_full, reset, i_ready, i_valid);
+module ififo (clk, in, out, wr, rd, i_full, reset, i_ready, i_valid);
 
   parameter col  = 8;
   parameter bw = 16;
 
   input  clk;
-  input  [col-1:0] push;        // write psum into fifo
-  input  pop;                   // read psum from fifo for MAC array
+  input  [col-1:0] wr;        // write psum into fifo
+  input  rd;                   // read psum from fifo for MAC array
   input  reset;
   input  [col*bw-1:0] in;       // psum data to push
   output [col*bw-1:0] out;      // psum data into MAC array
@@ -29,7 +29,7 @@ module ififo (clk, in, out, push, pop, i_full, reset, i_ready, i_valid);
 	    .rd_clk(clk),
 	    .wr_clk(clk),
 	    .rd(rd_en),
-	    .wr(push[i]),
+	    .wr(wr[i]),
       .o_empty(empty[i]),
       .o_full(full[i]),
 	    .in(in[(i+1)*bw-1:i*bw]),
@@ -43,7 +43,7 @@ module ififo (clk, in, out, push, pop, i_full, reset, i_ready, i_valid);
       rd_en <= 0;
    end
    else
-     rd_en <= pop;
+     rd_en <= rd;
    end
 
 endmodule

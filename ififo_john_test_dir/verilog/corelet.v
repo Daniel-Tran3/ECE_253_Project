@@ -95,16 +95,16 @@ assign sfp_out = sfp_output;
 
   // PSUM SRAM to IFIFO to MAC_ARRAY
 
-  ofifo #(.col(col), .bw(psum_bw)) ififo_instance (
+  ififo #(.col(col), .bw(psum_bw)) ififo_instance (
     .clk(clk),
     .in(sfp_input),      // from psum SRAM
     .out(ififo_out),         // Data output from IFIFO to MAC array (in_n of MAC)
     .rd(ififo_rd),       // MAC read enable (psums read), only asserted if MAC is ready and FIFO has valid data
     .wr(ififo_wr),         // write enable from SRAM valid, set when SRAM has valid data and IFIFO not full
-    .o_full(ififo_full),          // FIFO full flag
+    .i_full(ififo_full),          // FIFO full flag
     .reset(reset),
-    .o_ready(ififo_ready),         // FIFO can accept more writes
-    .o_valid(ififo_valid)          // FIFO has valid data for MAC array
+    .i_ready(ififo_ready),         // FIFO can accept more writes
+    .i_valid(ififo_valid)          // FIFO has valid data for MAC array
 );
 
   always @(posedge clk) begin
