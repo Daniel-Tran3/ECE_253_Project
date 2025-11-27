@@ -7,14 +7,14 @@ module core_tb;
 parameter bw = 4;
 parameter psum_bw = 16;
 parameter len_kij = 9;
-parameter len_onij = 16;
+parameter len_onij = 256;
 parameter col = 8;
 parameter row = 8;
-parameter len_nij = 36;
+parameter len_nij = 324;
 parameter row_idx = 1;
 parameter col_idx = 1;
-parameter o_ni_dim = 4;
-parameter a_pad_ni_dim = 6;
+parameter o_ni_dim = 16;
+parameter a_pad_ni_dim = 18;
 parameter ki_dim = 3;
 parameter nij_index = $clog2(len_nij);
 parameter kij_index = $clog2(len_kij);
@@ -83,6 +83,7 @@ integer out_file, out_scan_file ; // file_handler
 integer psum_file, psum_scan_file ; // file_handler
 integer captured_data; 
 integer t, i, j, k, kij;
+integer act_reads, l0_reads, ofifo_reads;
 integer error;
 
 assign inst_q[23+pmem_index-1:23] = A_pmem_q;
@@ -101,7 +102,7 @@ assign inst_q[1]   = execute_q;
 assign inst_q[0]   = load_q; 
 
 
-core  #(.bw(bw), .col(col), .row(row)) core_instance (
+core  #(.bw(bw), .col(col), .row(row), .pmem_index(pmem_index)) core_instance (
 	.clk(clk), 
 	.inst(inst_q),
 	.ofifo_valid(ofifo_valid),
@@ -176,7 +177,7 @@ initial begin
 
 
   for (kij=0; kij<9; kij=kij+1) begin  // kij loop
-  //for (kij=0; kij<2; kij=kij+1) begin  // kij loop
+  //for (kij=0; kij<1; kij=kij+1) begin  // kij loop
     $display("Kij %d\n", kij);
     case(kij)
      //0: w_file_name = "weight_itile0_otile0_kij0.txt";
@@ -219,8 +220,8 @@ initial begin
      8: psum_file_name = "psum_8.txt";
     endcase
 
-    A_pmem[9:6] = kij;
-    A_pmem[5:0] = 0;
+    A_pmem[kij_index+nij_index-1:nij_index] = kij;
+    A_pmem[nij_index-1:0] = 0;
 
 
     w_file = $fopen(w_file_name, "r");
@@ -347,86 +348,65 @@ $display("Row 0, col 8 weight: %b\n", core_instance.corelet_instance.mac_array_i
       
 
 
+    psum_file = $fopen(psum_file_name, "r");
+    psum_scan_file = $fscanf(psum_file, "%s", answer);
+    psum_scan_file = $fscanf(psum_file, "%s", answer);
+    psum_scan_file = $fscanf(psum_file, "%s", answer);
+
+
     /////// Activation data writing to L0 ///////
-    A_xmem = 11'b00000000000;  xw_mode = 0;
-    for (t=0; t<len_nij; t=t+1) begin
-	    #0.5 clk = 1'b0; CEN_xmem = 0;
-	    if (t > 0) begin
+    A_xmem = 11'b00000000000;  xw_mode = 0; act_reads = 0; l0_reads = 0; ofifo_reads = 0;
+    for (t=0; t<len_nij + 2*col + 2*row + len_nij; t=t+1) begin
+	    #0.5 clk = 1'b0; CEN_xmem = 0; act_reads = act_reads + 1;
+	    if (act_reads > 0) begin
 		    A_xmem = A_xmem + 1;
 		    l0_wr = 1;
 	    end
-      #0.5 clk = 1'b1;
-      //$display("%d", core_instance.activation_sram.A);
-      //if (t > 1) $display("%b", core_instance.activation_sram.Q);
+	    if (act_reads > len_nij - 1) begin
+		    CEN_xmem = 1;
+	    end
+	    if (act_reads > len_nij) begin
+		    l0_wr = 0;
+	    end
+	    if (act_reads > 1) begin
+		    l0_rd = 1; execute = 1; l0_reads = l0_reads + 1;
+	    end
+	    if (l0_reads > len_nij) begin
+		    l0_rd = 0; execute = 0; 
+	    end
+	    if (ofifo_valid) begin
+		ofifo_rd = 1;
+		ofifo_reads = ofifo_reads + 1;
+		CEN_pmem = 0; WEN_pmem = 0;
+	    end
+	    if (ofifo_reads > 1 && ofifo_reads < len_nij + 2) begin
+		    psum_scan_file = $fscanf(psum_file, "%128b", answer);
+                    /*
+		    if (core_instance.corelet_instance.ofifo_instance.out == answer) begin
+                            $display("%2d-th psum data matched.", ofifo_reads-1);
+                            if (answer == 'd0) begin
+                                    $display("Was 0.");
+                            end else begin
+                                    $display("Nonzero!");
+                            end
+                    end else begin
+                      $display("%2d-th output featuremap Data ERROR!!", ofifo_reads-1); 
+                      $display("ofifoout: %128b", core_instance.corelet_instance.ofifo_instance.out);
+                      $display("answer  : %128b", answer);
+                    end
+		    */
+                    A_pmem = A_pmem + 1;
+	    end 
+	    if (ofifo_reads > len_nij) begin
+		ofifo_rd = 0; CEN_pmem = 1; WEN_pmem = 1;
+	    end
+      	    #0.5 clk = 1'b1;
+      	    //$display("%d", core_instance.activation_sram.A);
+      	    //if (t > 1) $display("%b", core_instance.activation_sram.Q);
 
     end
 
-    #0.5 clk = 1'b0; CEN_xmem = 1; A_xmem = 0;
-    #0.5 clk = 1'b1; //$display("%b", core_instance.activation_sram.Q);
-    
-    #0.5 clk = 1'b0; l0_wr = 0;
-    #0.5 clk = 1'b1; //$display("%b", core_instance.activation_sram.Q);
-    /////////////////////////////////////
-
-
-    //#0.5 clk = 1'b0; l0_rd = 0; load = 1;
-    //#0.5 clk = 1'b1; //$display("%b", core_instance.activation_sram.Q);
-
-    //#0.5 clk = 1'b0; l0_rd = 0; load = 0;
-    //#0.5 clk = 1'b1; //$display("%b", core_instance.activation_sram.Q);
-
-    /////// Execution ///////
-    k = 0;
-    $display("Execution begins.\n");
-    for (t = 0; t < len_nij + 2*col + 2*row + len_nij; t=t+1) begin
-      #0.5 clk = 1'b0; l0_rd = 1; execute = 1;
-      #0.5 clk = 1'b1;
-      if (t < len_nij) begin
-	      execute = 0;
-	      //$display("%b", core_instance.corelet_instance.l0_instance.out);
-      end
-      #0.5 clk = 1'b0; 
-            if (ofifo_valid) begin
-                    ofifo_rd = 1;
-		    k = k + 1;
-            end            
-
-            CEN_pmem = 0; WEN_pmem = 0;
-            if (k > 1) begin
-                    //psum_scan_file = $fscanf(psum_file, "%128b", answer);
-                    
-                    //if (core_instance.corelet_instance.ofifo_instance.out == answer) begin
-                      //      $display("%2d-th psum data matched.", t);
-                            //if (answer == 'd0) begin
-                            //        $display("Was 0.");
-                            //end else begin
-                            //        $display("Nonzero!");
-                            //end
-                    //end else begin
-                      //$display("%2d-th output featuremap Data ERROR!!", t); 
-                      //$display("ofifoout: %128b", core_instance.corelet_instance.ofifo_instance.out);
-                      //$display("answer  : %128b", answer);
-                      // end
-                     A_pmem = A_pmem + 1;
-             
-              
-            end
-	    if (k < len_nij + 2) begin
-		    CEN_mem = 1; WEN_pmem = 1;
-	    end
-		     //$display("%d", A_pmem);
-                     //$display("%d", core_instance.psum_sram.A);
-                     //$display("%b", core_instance.psum_sram.D); 
-	    #0.5 clk = 1'b1;
-	     //$display("%b", core_instance.corelet_instance.ofifo_instance.out);
-
-end
-
-    #0.5 clk = 1'b0; l0_rd = 0; execute = 0;
-    #0.5 clk = 1'b1;
-    #0.5 clk = 1'b0;
-    #0.5 clk = 1'b1;
-
+        
     // Wait for last element to load
     for (t = 0; t < col; t=t+1) begin
       #0.5 clk = 1'b0;
@@ -456,25 +436,6 @@ end
       //$display("%b\n", core_instance.corelet_instance.mac_array_instance.out_s);
     end
     /////////////////////////////////////
-
-/*
-    psum_file = $fopen(psum_file_name, "r");
-    psum_scan_file = $fscanf(psum_file, "%s", answer);
-    psum_scan_file = $fscanf(psum_file, "%s", answer);
-    psum_scan_file = $fscanf(psum_file, "%s", answer);
-*/
-
-    //////// OFIFO READ ////////
-    // Ideally, OFIFO should be read while execution, but we have enough ofifo
-    // depth so we can fetch out after execution.
-    for (t = 0; t < len_nij + 1; t=t+1) begin
-            
-    end
-    /////////////////////////////////////
-    #0.5 clk = 1'b0; ofifo_rd = 0; CEN_pmem = 1; WEN_pmem = 1;
-
-    //$display("%d", core_instance.activation_sram.A);
-    //$display("%b", core_instance.activation_sram.D);
   end  // end of kij loop
 
 
@@ -486,7 +447,7 @@ end
   out_scan_file = $fscanf(out_file,"%s", answer); 
   out_scan_file = $fscanf(out_file,"%s", answer); 
 
-  error = 0; A_pmem = 0; pmem_mode = 1; A_pmem_sfp[10] = 1;
+  error = 0; A_pmem = 0; pmem_mode = 1; A_pmem_sfp[pmem_index-1] = 1;
 
 /*
   A_pmem = 11'b00000000000; 
@@ -536,7 +497,7 @@ end
     end
    
  
-    #0.5 clk = 1'b0; reset = 1; sfp_reset = 1; CEN_pmem = 1; WEN_pmem = 1; A_pmem[10] = 0;
+    #0.5 clk = 1'b0; reset = 1; sfp_reset = 1; CEN_pmem = 1; WEN_pmem = 1; A_pmem[pmem_index-1] = 0;
     #0.5 clk = 1'b1;  
     #0.5 clk = 1'b0; reset = 0; sfp_reset = 0;     #0.5 clk = 1'b1;  
 
@@ -546,8 +507,8 @@ end
         if (j<len_kij) begin 
 		CEN_pmem = 0; WEN_pmem = 1; 
         //acc_scan_file = $fscanf(acc_file,"%11b", A_pmem);
-        A_pmem[5:0] = $floor(i / o_ni_dim) * a_pad_ni_dim + i % o_ni_dim + $floor(j / ki_dim) * a_pad_ni_dim + j % ki_dim;
-        A_pmem[9:6] = j;
+        A_pmem[nij_index-1:0] = $floor(i / o_ni_dim) * a_pad_ni_dim + i % o_ni_dim + $floor(j / ki_dim) * a_pad_ni_dim + j % ki_dim;
+        A_pmem[kij_index+nij_index:nij_index] = j;
         end
                        else  begin CEN_pmem = 1; WEN_pmem = 1; end
 
@@ -602,7 +563,7 @@ end
   out_scan_file = $fscanf(out_file,"%s", answer); 
 
   #0.5 clk = 1'b0;
-  A_pmem_sfp[9:0] = 0;
+  A_pmem_sfp[pmem_index-2:0] = 0;
   A_pmem = A_pmem_sfp;
   #0.5 clk = 1'b1;
 
@@ -610,6 +571,7 @@ end
 	#0.5 clk = 1'b0; 
 	if (t<len_onij) begin
 		CEN_pmem = 0; WEN_pmem = 1;
+		
 	end else begin
 		CEN_pmem = 1; WEN_pmem = 1;
 	end
@@ -617,6 +579,9 @@ end
 	  A_pmem_sfp = A_pmem_sfp + 1;
 	  A_pmem = A_pmem_sfp;
 	end
+	//$display("Reading from PMEM.");
+        //$display("Address: %d", A_pmem);
+
 	if (t > 1) begin
 	  A_pmem = A_pmem_sfp;
           out_scan_file = $fscanf(out_file,"%128b", answer); // reading from out file to answer
@@ -682,7 +647,7 @@ always @ (posedge clk) begin
 //     end
 /*
      if (post_ex) begin
-          if (nij == 7) begin
+          if (nij == 64) begin
 	   $display("Multiplication on row 1, column 1.");
 	   $display("A_q: %d", core_instance.corelet_instance.mac_array_instance.row_num[row_idx].mac_row_instance.col_num[col_idx].mac_tile_instance.a_q);
 	   $display("B_q: %d", $signed(core_instance.corelet_instance.mac_array_instance.row_num[row_idx].mac_row_instance.col_num[col_idx].mac_tile_instance.b_q));
@@ -695,7 +660,7 @@ always @ (posedge clk) begin
 
      nij <= nij + 1;
    end
-  */
+*/
 end
 
 

@@ -6,7 +6,7 @@ parameter row = 8;
 parameter col = 8;
 
 input clk, reset;
-input [33:0] inst;
+input [7:0] inst;
 input [row*bw-1:0] l0_input;
 
 input [col*psum_bw-1:0] sfp_input;

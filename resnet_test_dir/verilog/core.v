@@ -33,7 +33,7 @@ module core (clk, inst, ofifo_valid, D_xmem, sfp_out, xw_mode, reset, sfp_reset,
   corelet #(.bw(bw), .psum_bw(psum_bw), .row(row), .col(col)) corelet_instance (
     .clk(clk),
     .reset(reset),
-    .inst(inst),
+    .inst(inst[7:0]),
     .ofifo_valid(ofifo_valid),
     .l0_input(l0_input),
     .ofifo_output(ofifo_output),
