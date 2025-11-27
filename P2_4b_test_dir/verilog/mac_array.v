@@ -3,8 +3,8 @@
 module mac_array (clk, reset, out_s, in_w, in_n, inst_w, valid, act_mode);
 
   parameter bw = 4;
-  parameter psum_bw = 16;
-  parameter psum_bw2 = 8;
+  parameter psum_bw = 24;
+  parameter psum_bw2 = 12;
   parameter col = 8;
   parameter row = 8;
 

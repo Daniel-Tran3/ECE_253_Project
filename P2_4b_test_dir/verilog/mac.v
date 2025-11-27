@@ -4,8 +4,8 @@ module mac (out, a, b, c, act_mode);
 
 parameter bw = 4;
 parameter bw2 = 2;
-parameter psum_bw = 16;
-parameter psum_bw2 = 8;
+parameter psum_bw = 24;
+parameter psum_bw2 = 12;
 
 output signed [psum_bw-1:0] out;
 input signed  [bw-1:0] a;  // activation

@@ -22,7 +22,7 @@ module ofifo (clk, in, out, rd, wr, o_full, reset, o_ready, o_valid);
   genvar i;
 
   assign o_ready = !(|full) ;
-  assign o_full  = &full ;
+  assign o_full  = |full ;
   assign o_valid = !(|empty) ;
 
   generate

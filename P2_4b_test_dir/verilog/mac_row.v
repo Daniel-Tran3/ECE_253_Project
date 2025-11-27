@@ -3,8 +3,8 @@
 module mac_row (clk, out_s, in_w, in_n, valid, inst_w, reset, act_mode);
 
   parameter bw = 4;
-  parameter psum_bw = 16;
-  parameter psum_bw2 = 8;
+  parameter psum_bw = 24;
+  parameter psum_bw2 = 12;
   parameter col = 8;
 
   input  clk, reset;

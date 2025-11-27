@@ -2,12 +2,11 @@ module corelet (clk, reset, inst, l0_input, ofifo_valid, ofifo_output, xw_mode, 
 
 parameter bw = 4;
 parameter psum_bw = 16;
-parameter psum_bw2 = 8;
 parameter row = 8;
 parameter col = 8;
 
 input clk, reset;
-input [33:0] inst;
+input [35:0] inst;
 input [row*bw-1:0] l0_input;
 
 input [col*psum_bw-1:0] sfp_input;
@@ -39,7 +38,7 @@ assign sfp_out = sfp_output;
 
 
 // MAC array
-  mac_array #(.bw(bw), .psum_bw(psum_bw), .psum_bw2(psum_bw2)) mac_array_instance (
+  mac_array #(.bw(bw), .psum_bw(psum_bw)) mac_array_instance (
     .clk(clk),
     .reset(reset),
     .out_s(mac_output),    // output connected to SFU
@@ -62,18 +61,16 @@ assign sfp_out = sfp_output;
     .o_ready(l0_ready),
     .xw_mode(xw_mode)
   );
-
 // SFU: accumulate + relu
-  sfp #(.col(col), .psum_bw(psum_bw), .psum_bw2(psum_bw2)) sfp_instance (
+  sfp #(.col(col), .psum_bw(psum_bw)) sfp_instance (
       .clk(clk),
       .reset(sfp_reset),
       .in_psum(sfp_input),    // MAC outputs connected to SFU input
-      .valid_in({col{inst[33]}}),      // MAC output valid
+      .valid_in({col{inst[35]}}),      // MAC output valid
       .out_accum(sfp_output),   // SFP output (accum + relu) connected to OFIFO input
       .wr_ofifo(ofifo_wr),     // write enable for OFIFO
       .o_valid(sfp_valid),
-      .relu_en(relu_en),
-      .act_mode(act_mode)
+      .relu_en(relu_en)
     );
 
   ofifo #(.col(col), .bw(psum_bw)) ofifo_instance (

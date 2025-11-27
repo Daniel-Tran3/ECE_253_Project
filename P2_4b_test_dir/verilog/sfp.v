@@ -1,7 +1,7 @@
 module sfp (clk, reset, in_psum, valid_in, out_accum, wr_ofifo, o_valid, relu_en, act_mode);
     parameter col = 8;
-    parameter psum_bw = 16;
-    parameter psum_bw2 = 8;
+    parameter psum_bw = 24;
+    parameter psum_bw2 = 12;
 
     input  clk;
     input  reset;
@@ -38,19 +38,20 @@ module sfp (clk, reset, in_psum, valid_in, out_accum, wr_ofifo, o_valid, relu_en
                     //acc_reg[k] <= next_val;
 		    if (valid_in[k]) begin
 			    if (act_mode) begin
-			    acc_reg[k][psum_bw2-1:0] <= (relu_en && (acc_reg[k][psum_bw2-1:0] + in_psum[(k)*psum_bw+psum_bw2-1:k*psum_bw] < 0)) ? 0 : acc_reg[k][psum_bw2-1:0] + in_psum[(k)*psum_bw+psum_bw2-1:k*psum_bw];
-			    acc_reg[k][psum_bw-1:psum_bw2] <= (relu_en && (acc_reg[k][psum_bw-1:psum_bw2]  + in_psum[(k+1)*psum_bw-1:k*psum_bw+psum_bw2] < 0)) ? 0 : acc_reg[k][psum_bw-1:psum_bw2]  + in_psum[(k+1)*psum_bw-1:k*psum_bw+psum_bw2];
+			    acc_reg[k][psum_bw2-1:0] <= acc_reg[k][psum_bw2-1:0] + in_psum[(k)*psum_bw+psum_bw2-1:k*psum_bw];
+			    acc_reg[k][psum_bw-1:psum_bw2] <= acc_reg[k][psum_bw-1:psum_bw2]  + in_psum[(k+1)*psum_bw-1:k*psum_bw+psum_bw2];
 			    end else begin
-			    acc_reg[k] <= (relu_en && (acc_reg[k] + in_psum[(k+1)*psum_bw-1:k*psum_bw] < 0)) ? 0 : acc_reg[k] + in_psum[(k+1)*psum_bw-1:k*psum_bw];
+			    acc_reg[k] <= acc_reg[k] + in_psum[(k+1)*psum_bw-1:k*psum_bw];
 		    end
 		    end else begin 
-		    	acc_reg[k] <= (relu_en && acc_reg[k] < 0) ? 0 : acc_reg[k];
+		    	acc_reg[k] <= acc_reg[k];
 			end
                 end
             end
 
             // output mapping & ReLU
-            assign out_accum[(k+1)*psum_bw-1 : k*psum_bw] = acc_reg[k];
+		    assign out_accum[(k)*psum_bw+psum_bw2-1 : k*psum_bw] = (act_mode) ? ((acc_reg[k][psum_bw2-1:0] < 0) ? 0 : acc_reg[k][psum_bw2-1:0]) : ((acc_reg[k] < 0) ? 0 : acc_reg[k][psum_bw2-1:0]); 
+            	assign out_accum[(k+1)*psum_bw-1 : k*psum_bw + psum_bw2] = (act_mode) ? ((acc_reg[k][psum_bw-1:psum_bw2] < 0) ? 0 : acc_reg[k][psum_bw-1:psum_bw2]) : ((acc_reg[k] < 0) ? 0 : acc_reg[k][psum_bw-1:psum_bw2]); 
 
 
         end

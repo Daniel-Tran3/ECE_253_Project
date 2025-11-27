@@ -5,14 +5,14 @@
 module core_tb;
 
 parameter bw = 4;
-parameter psum_bw = 32;
-parameter psum_bw2 = 16;
+parameter psum_bw = 24;
+parameter psum_bw2 = 12;
 parameter len_kij = 9;
 parameter len_onij = 16;
 parameter col = 8;
 parameter row = 8;
 parameter len_nij = 36;
-parameter row_idx = 8;
+parameter row_idx = 7;
 parameter col_idx = 1;
 parameter o_ni_dim = 4;
 parameter a_pad_ni_dim = 6;
@@ -26,7 +26,7 @@ wire [33:0] inst_q;
 
 reg xw_mode = 0; // x if 0, w if 1
 reg pmem_mode = 0; // write from OFIFO if 0, write from SFP if 1
-reg act_mode = 1; // 4 bits if 0, 2 bits if 1
+reg act_mode = 0; // 4 bits if 0, 2 bits if 1
 reg [1:0]  inst_w_q = 0; 
 reg [bw*row-1:0] D_xmem_q = 0;
 reg CEN_xmem = 1;
@@ -176,8 +176,8 @@ initial begin
   /////////////////////////////////////////////////
 
 
-  //for (kij=0; kij<9; kij=kij+1) begin  // kij loop
   for (kij=0; kij<9; kij=kij+1) begin  // kij loop
+  //for (kij=0; kij<1; kij=kij+1) begin  // kij loop
     $display("Kij %d\n", kij);
     case(kij)
      //0: w_file_name = "weight_itile0_otile0_kij0.txt";
@@ -422,12 +422,12 @@ end
     end
     /////////////////////////////////////
 
-/*
+
     psum_file = $fopen(psum_file_name, "r");
     psum_scan_file = $fscanf(psum_file, "%s", answer);
     psum_scan_file = $fscanf(psum_file, "%s", answer);
     psum_scan_file = $fscanf(psum_file, "%s", answer);
-*/
+
 
     //////// OFIFO READ ////////
     // Ideally, OFIFO should be read while execution, but we have enough ofifo
@@ -440,20 +440,21 @@ end
 
             CEN_pmem = 0; WEN_pmem = 0;
             if (t > 0) begin
-                    //psum_scan_file = $fscanf(psum_file, "%128b", answer);
-                    
-                    //if (core_instance.corelet_instance.ofifo_instance.out == answer) begin
-                      //      $display("%2d-th psum data matched.", t);
-                            //if (answer == 'd0) begin
-                            //        $display("Was 0.");
-                            //end else begin
-                            //        $display("Nonzero!");
-                            //end
-                    //end else begin
-                      //$display("%2d-th output featuremap Data ERROR!!", t); 
-                      //$display("ofifoout: %128b", core_instance.corelet_instance.ofifo_instance.out);
-                      //$display("answer  : %128b", answer);
-                      // end
+                    psum_scan_file = $fscanf(psum_file, "%192b", answer);
+                   /* 
+                    if (core_instance.corelet_instance.ofifo_instance.out == answer) begin
+                            $display("%2d-th psum data matched.", t);
+                            if (answer == 'd0) begin
+                                    $display("Was 0.");
+                            end else begin
+                                    $display("Nonzero!");
+                            end
+                    end else begin
+                      $display("%2d-th output featuremap Data ERROR!!", t); 
+                      $display("ofifoout: %30b", core_instance.corelet_instance.ofifo_instance.out[psum_bw-1:0]);
+                      $display("answer  : %30b", answer[psum_bw-1:0]);
+                       end
+		       */
                      A_pmem = A_pmem + 1;
              
               
@@ -515,7 +516,7 @@ end
     #0.5 clk = 1'b1; 
 
     if (i>0) begin
-     out_scan_file = $fscanf(out_file,"%128b", answer); // reading from out file to answer
+     out_scan_file = $fscanf(out_file,"%192b", answer); // reading from out file to answer
      
      if (sfp_out == answer) begin
          $display("%2d-th output featuremap Data matched! :D", i); 
@@ -523,8 +524,8 @@ end
          //$display("answer: %128b", answer);
      end else begin
          $display("%2d-th output featuremap Data ERROR!!", i); 
-         $display("sfpout: %128b", sfp_out);
-         $display("answer: %128b", answer);
+         $display("sfpout: %192b", sfp_out);
+         $display("answer: %192b", answer);
          error = 1;
        end
               
@@ -609,13 +610,13 @@ end
 	end
 	if (t > 1) begin
 	  A_pmem = A_pmem_sfp;
-          out_scan_file = $fscanf(out_file,"%128b", answer); // reading from out file to answer
+          out_scan_file = $fscanf(out_file,"%192b", answer); // reading from out file to answer
           if (core_instance.psum_sram.Q == answer) begin
             $display("%2d-th output featuremap Data matched! :D", t); 
           end else begin
             $display("%2d-th output featuremap Data ERROR!!", t); 
-            $display("sfpout: %256b", core_instance.psum_sram.Q);
-            $display("answer: %256b", answer);
+            $display("sfpout: %192b", core_instance.psum_sram.Q);
+            $display("answer: %192b", answer);
             error = 1;
           end
 
@@ -663,14 +664,14 @@ always @ (posedge clk) begin
 	   $display("%b", core_instance.corelet_instance.ofifo_instance.in);
    end
 */
-/*
+
   
-   if (core_instance.corelet_instance.mac_array_instance.row_num[row_idx].mac_row_instance.col_num[col_idx].mac_tile_instance.inst_w[1] != 0) begin
+   //if (core_instance.corelet_instance.mac_array_instance.row_num[row_idx].mac_row_instance.col_num[col_idx].mac_tile_instance.inst_w[1] != 0) begin
 
-	      $display("%b", core_instance.corelet_instance.l0_instance.out);
-	   $display("Nij %d, Captured: A_q %b", nij, core_instance.corelet_instance.mac_array_instance.row_num[row_idx].mac_row_instance.col_num[col_idx].mac_tile_instance.in_w);
-     end
-
+	     // $display("%b", core_instance.corelet_instance.l0_instance.out);
+	   //$display("Nij %d, Captured: A_q %b", nij, core_instance.corelet_instance.mac_array_instance.row_num[row_idx].mac_row_instance.col_num[col_idx].mac_tile_instance.in_w);
+     //end
+/*
      if (post_ex) begin
           if (nij == 7) begin
 	   $display("Multiplication on row 1, column 1.");
@@ -687,7 +688,7 @@ always @ (posedge clk) begin
 
      nij <= nij + 1;
    end
-*/  
+  */
 end
 
 

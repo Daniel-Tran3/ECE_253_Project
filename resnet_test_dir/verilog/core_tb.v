@@ -11,7 +11,7 @@ parameter len_onij = 16;
 parameter col = 8;
 parameter row = 8;
 parameter len_nij = 36;
-parameter row_idx = 5;
+parameter row_idx = 1;
 parameter col_idx = 1;
 parameter o_ni_dim = 4;
 parameter a_pad_ni_dim = 6;
@@ -659,15 +659,15 @@ always @ (posedge clk) begin
 	   $display("%b", core_instance.corelet_instance.ofifo_instance.in);
    end
 */
-/*
+
   
-   if (core_instance.corelet_instance.mac_array_instance.row_num[row_idx].mac_row_instance.col_num[col_idx].mac_tile_instance.inst_w[1] != 0) begin
+   //if (core_instance.corelet_instance.mac_array_instance.row_num[row_idx].mac_row_instance.col_num[col_idx].mac_tile_instance.inst_w[1] != 0) begin
 
-	      $display("%b", core_instance.corelet_instance.l0_instance.out);
-	   $display("Nij %d, Captured: A_q %b", nij, core_instance.corelet_instance.mac_array_instance.row_num[row_idx].mac_row_instance.col_num[col_idx].mac_tile_instance.in_w);
-     end
-
-     if (post_ex && kij > 0) begin
+//	      $display("%b", core_instance.corelet_instance.l0_instance.out);
+//	   $display("Nij %d, Captured: A_q %b", nij, core_instance.corelet_instance.mac_array_instance.row_num[row_idx].mac_row_instance.col_num[col_idx].mac_tile_instance.in_w);
+//     end
+/*
+     if (post_ex) begin
           if (nij == 7) begin
 	   $display("Multiplication on row 1, column 1.");
 	   $display("A_q: %d", core_instance.corelet_instance.mac_array_instance.row_num[row_idx].mac_row_instance.col_num[col_idx].mac_tile_instance.a_q);
@@ -675,7 +675,6 @@ always @ (posedge clk) begin
 	   $display("In_n: %d", $signed(core_instance.corelet_instance.mac_array_instance.row_num[row_idx].mac_row_instance.col_num[col_idx].mac_tile_instance.in_n));
 	   $display("Out_s: %d", $signed(core_instance.corelet_instance.mac_array_instance.row_num[row_idx].mac_row_instance.col_num[col_idx].mac_tile_instance.out_s));
 	   $display("Product: %d", $signed(core_instance.corelet_instance.mac_array_instance.row_num[row_idx].mac_row_instance.col_num[col_idx].mac_tile_instance.mac_instance.product));
-	   $display("Product (Expand): %d", $signed(core_instance.corelet_instance.mac_array_instance.row_num[row_idx].mac_row_instance.col_num[col_idx].mac_tile_instance.mac_instance.product_expand));
 	   $display("Padded A: %d", $signed(core_instance.corelet_instance.mac_array_instance.row_num[row_idx].mac_row_instance.col_num[col_idx].mac_tile_instance.mac_instance.a_pad));
 	   $display("C: %d", $signed(core_instance.corelet_instance.mac_array_instance.row_num[row_idx].mac_row_instance.col_num[col_idx].mac_tile_instance.mac_instance.c));
      end
