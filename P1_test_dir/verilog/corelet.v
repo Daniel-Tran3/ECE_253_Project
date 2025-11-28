@@ -6,7 +6,7 @@ parameter row = 8;
 parameter col = 8;
 
 input clk, reset;
-input [33:0] inst;
+input [7:0] inst;
 input [row*bw-1:0] l0_input;
 
 input [col*psum_bw-1:0] sfp_input;
@@ -65,7 +65,7 @@ assign sfp_out = sfp_output;
       .clk(clk),
       .reset(sfp_reset),
       .in_psum(sfp_input),    // MAC outputs connected to SFU input
-      .valid_in({col{inst[33]}}),      // MAC output valid
+      .valid_in({col{inst[7]}}),      // MAC output valid
       .out_accum(sfp_output),   // SFP output (accum + relu) connected to OFIFO input
       .wr_ofifo(ofifo_wr),     // write enable for OFIFO
       .o_valid(sfp_valid),
