@@ -25,7 +25,6 @@ module mac_tile (
     in_w,
     in_n,
     inst_w,
-    os_write,
 
     // outputs
     out_s,
@@ -35,31 +34,27 @@ module mac_tile (
 
   parameter bw = 4;
   parameter psum_bw = 16;
+  parameter inst_width = 4;
 
   input clk;
   input reset;
 
   input [bw-1:0] in_w;  // westward input
   input [psum_bw-1:0] in_n;  // northward input
-  input [3:0] inst_w;  // instruction input, coming from the west
-  // inst[3]: os_flush inst[2]: os_execute, inst[1]:ws_execute, inst[0]: kernel loading
+  input [inst_width-1:0] inst_w;  // instruction input, coming from the west
+  // inst[4]: load_psum, inst[3]: os_flush inst[2]: os_execute, inst[1]:ws_execute, inst[0]: kernel loading
 
   // southward output
   // may be accumulated value, or a weight
-  output [psum_bw-1:0] out_s;
+  output reg [psum_bw-1:0] out_s;
   output [bw-1:0] out_e;  // eastward output
-  output [1:0] inst_e;  // instruction eastward passthrough
+  output [inst_width-1:0] inst_e;  // instruction eastward passthrough
 
   // instrucion decode
   wire os_flush;
   wire os_exec;
   wire ws_exec;
   wire ws_kernld;
-  assign os_flush  = inst[3];
-  assign os_exec   = inst[2];
-  assign ws_exec   = inst[1];
-  assign ws_kernld = inst[0];
-
   // write enable control bits
   reg                a_wr;
   reg                b_wr;
@@ -68,11 +63,18 @@ module mac_tile (
   // data wires for internal registers that aren't so obvious
   reg                c_d;
 
-  reg  [        1:0] inst_q;  // instruction register
+  reg  [        inst_width-1:0] inst_q;  // instruction register
   reg  [     bw-1:0] a_q;  // leftward register (activation)
   reg  [     bw-1:0] b_q;  // weight OR northward register
   reg  [psum_bw-1:0] c_q;  // accumulated value
   wire [psum_bw-1:0] mac_out;
+
+  // decoded instruction
+  assign os_flush  = inst_q[3];
+  assign os_exec   = inst_q[2];
+  assign ws_exec   = inst_q[1];
+  assign ws_kernld = inst_q[0];
+
 
   always @(os_flush, os_exec, ws_exec, ws_kernld, b_q, c_q, mac_out, in_n) begin : comb_logic
 
@@ -82,7 +84,7 @@ module mac_tile (
     else if (os_flush) out_s = c_q;  // emit c_q when writing for OS
 
     // control the c (accumulator) register
-    c_wr = ws_exec | os_exec | os_write;
+    c_wr = ws_exec | os_exec | os_flush;
     c_d  = os_exec ? mac_out : in_n;
 
     // control the b (weight) register
@@ -111,7 +113,9 @@ module mac_tile (
   always @(posedge clk) begin : seq_logic
     if (reset) begin
       inst_q <= 2'b00;
-      c_q <= 0; // if OS, c_q must start at 0
+      // TODO: see if it's feasible to load 0s into accumulators during OS flush
+      // by reading in 0s from pmem into IFIFO beforehand
+      // c_q <= 0; // if OS, c_q must start at 0
     end else begin
       inst_q <= inst_w;
       if (a_wr) a_q <= in_w;

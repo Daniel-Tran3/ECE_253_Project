@@ -56,19 +56,12 @@ module mac_array (
     end
   endgenerate
 
-  always @(posedge clk) begin
 
-    //valid <= valid_temp[row*col-1:row*col-8];
-    // inst_w_temp[1:0]   <= inst_w;
-    // inst_w_temp[3:2]   <= inst_w_temp[1:0];
-    // inst_w_temp[5:4]   <= inst_w_temp[3:2];
-    // inst_w_temp[7:6]   <= inst_w_temp[5:4];
-    // inst_w_temp[9:8]   <= inst_w_temp[7:6];
-    // inst_w_temp[11:10] <= inst_w_temp[9:8];
-    // inst_w_temp[13:12] <= inst_w_temp[11:10];
-    // inst_w_temp[15:14] <= inst_w_temp[13:12];
+  always @(posedge clk) begin
     inst_w_temp[inst_width-1:0] <= inst_w;
-    for (integer i = 1; i < row; i = i + 1) begin
+  end
+  for (i = 0; i < row; i = i + 1) begin
+    always @(posedge clk) begin
       // we only unconditionally shift the low 3 bits of instructions
       inst_w_temp[inst_width*(i+1)-2:inst_width*i] <= inst_w_temp[inst_width*i-2:inst_width*(i-1)];
       // instantly propagate the os-flush bit to all rows' instructions if it

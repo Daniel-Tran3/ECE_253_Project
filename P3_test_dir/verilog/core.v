@@ -3,7 +3,9 @@ module core (
     inst,
     ofifo_valid,
     D_xmem,
+    D_pmem,
     execution_mode,
+    ififo_mode,
     sfp_out,
     xw_mode,
     reset,
@@ -12,26 +14,42 @@ module core (
     pmem_mode
 );
 
+  // TODO:
+  // 
+  // permit assignment from D_pmem to address in psum
+  //
+  // update corelet instruction width to be 35:0
+  //
+  // update pmem mode to be 2:0
+  //
+  // use ififo_mode to mux IFIFO input data between xmem and pmem
+  // Also expand wmem elements to be p_mem width
+  //
+  // add psum load to mac_tile.v
+
   parameter bw = 4;
   parameter psum_bw = 16;
   parameter col = 8;
   parameter row = 8;
 
   // constants for execution mode
-  localparam reg OS=0;  // output stationary
-  localparam reg WS=1;  // weight-stationary
 
   input clk, reset, sfp_reset;
   input [33:0] inst;
   input [row*bw-1:0] D_xmem;
+  input [col*psum_bw-1:0] D_pmem;
   input xw_mode;  // x if 0, w if 1
-  input pmem_mode;  // write from OFIFO if 0, write from SFP if 1
+  input [1:0] pmem_mode;  // write from OFIFO if 0, write from SFP if 1, write
+  // from D_pmem (user) if 2.
   input relu_en;
   input execution_mode;  // 0 = weight-stationary, 1 = output-stationary
+  input ififo_mode;  // 0 = load from X mem (weights), 1 = load from psum mem
 
   output [psum_bw*col-1:0] sfp_out;
   output ofifo_valid;
 
+  wire [col*psum_bw-1:0] weight_sram_expanded;
+  wire [col*psum_bw-1:0] ififo_input;
   wire [row*bw-1:0] l0_input;
   wire [row*bw-1:0] act_sram_output;
   wire [row*bw-1:0] w_sram_output;
@@ -41,12 +59,15 @@ module core (
 
   reg [col*psum_bw-1:0] sfp_out_q;
 
-  assign l0_input = ({row*bw{!xw_mode}} & act_sram_output) |  ({row*bw{xw_mode}} & w_sram_output);
+  assign l0_input = xw_mode ? w_sram_output : act_sram_output;
 
-  assign pmem_input = ({col*psum_bw{!pmem_mode}} & ofifo_output) | ({col*psum_bw{pmem_mode}} & sfp_out_q);
-
-  // TODO:
-  // - wire corelet.ififo_input to weight sram
+  genvar i;
+  for (i = 0; i < col; i=i+1) begin
+    assign weight_sram_expanded[i*psum_bw+bw-1:i*psum_bw] = w_sram_output[bw*(i+1)-1:bw*i];
+    assign weight_sram_expanded[(i+1)*psum_bw-1:i*psum_bw+bw] = {(psum_bw-bw){1'b0}};
+  end
+  assign ififo_input = ififo_mode ? weight_sram_expanded : psum_sram_output;
+  assign pmem_input = pmem_mode[1] ? D_pmem : (pmem_mode[0] ? sfp_out_q : ofifo_output);
 
   corelet #(
       .bw(bw),
@@ -55,20 +76,23 @@ module core (
       .col(col)
   ) corelet_instance (
       // clock/reset
-      .clk(clk),
+      .clk  (clk),
       .reset(reset),
 
       // inputs
       .inst(inst),
-      .ofifo_valid(ofifo_valid),
+      .ififo_input(ififo_input),
       .l0_input(l0_input),
+      .execution_mode(execution_mode),
+
+      // sfp control
       .sfp_input(psum_sram_output),
       .sfp_reset(sfp_reset),
-      .xw_mode(xw_mode),
       .relu_en(relu_en),
 
       // outputs
       .ofifo_output(ofifo_output),
+      .ofifo_valid(ofifo_valid),
       .sfp_out(sfp_out)
   );
 
@@ -115,6 +139,5 @@ module core (
   always @(posedge clk) begin
     sfp_out_q <= sfp_out;
   end
-
 
 endmodule

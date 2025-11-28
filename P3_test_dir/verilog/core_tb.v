@@ -17,6 +17,9 @@ module core_tb;
   parameter a_pad_ni_dim = 6;
   parameter ki_dim = 3;
 
+  parameter xmem_words = 2048;
+  parameter pmem_words = 2048;
+
   reg clk = 0;
   reg reset = 1;
   reg sfp_reset = 1;
@@ -24,7 +27,7 @@ module core_tb;
   wire [33:0] inst_q;
 
   reg xw_mode = 0;  // x if 0, w if 1
-  reg pmem_mode = 0;  // write from OFIFO if 0, write from SFP if 1
+  reg [1:0] pmem_mode = 0;  // write from OFIFO if 0, write from SFP if 1
   reg [1:0] inst_w_q = 0;
   reg [bw*row-1:0] D_xmem_q = 0;
   reg CEN_xmem = 1;
@@ -72,6 +75,11 @@ module core_tb;
   reg [8*30:1] psum_file_name;
   wire ofifo_valid;
   wire [col*psum_bw-1:0] sfp_out;
+
+  // reference data for verification
+  reg [bw*row-1:0] amem_sim[xmem_words-1:0];
+  reg [bw*row-1:0] wmem_sim[xmem_words-1:0];
+  reg [pmem_words*psum_bw*col-1:0] pmem_sim;
 
   integer x_file, x_scan_file;  // file_handler
   integer w_file, w_scan_file;  // file_handler
@@ -164,9 +172,13 @@ module core_tb;
     /////////////////////////
 
     /////// Activation data writing to memory ///////
-    //for (t=0; t<len_nij; t=t+1) begin  
+    //for (t=0; t<len_nij; t=t+1) begin
+
     for (t = 0; t < len_nij; t = t + 1) begin
       #0.5 clk = 1'b0;
+      // xw_mode=0 is the default, but we want to be explicit that we are
+      // writing to activations
+      xw_mode = 0;
       x_scan_file = $fscanf(x_file, "%32b", D_xmem);
       WEN_xmem = 0;
       CEN_xmem = 0;
@@ -174,6 +186,10 @@ module core_tb;
       //$display("%d", core_instance.activation_sram.A);
       //$display("%b", core_instance.activation_sram.D);
       #0.5 clk = 1'b1;
+
+      // fill in the expected value in xmem_sim
+      if (t == 7) $display("%d\n", D_xmem);
+      amem_sim[A_xmem] = D_xmem;
     end
 
     #0.5 clk = 1'b0;
@@ -181,8 +197,17 @@ module core_tb;
     CEN_xmem = 1;
     A_xmem   = 0;
 
+    // verify activations are written to SRAM
     //$display("%d", core_instance.activation_sram.A);
     //$display("%b", core_instance.activation_sram.D);
+    for (t = 0; t < len_nij; t = t + 1) begin
+      if (amem_sim[t] != core_instance.activation_sram.memory[t]) begin
+        $display("Unexpected value in activation SRAM!\n At address %d, expected %d but got %d", t,
+                 amem_sim[t], core_instance.activation_sram.memory[t]);
+        $finish;
+      end
+    end
+
     #0.5 clk = 1'b1;
 
     $fclose(x_file);
@@ -193,15 +218,6 @@ module core_tb;
       //for (kij=0; kij<2; kij=kij+1) begin  // kij loop
       $display("Kij %d\n", kij);
       case (kij)
-        //0: w_file_name = "weight_itile0_otile0_kij0.txt";
-        //1: w_file_name = "weight_itile0_otile0_kij1.txt";
-        //2: w_file_name = "weight_itile0_otile0_kij2.txt";
-        //3: w_file_name = "weight_itile0_otile0_kij3.txt";
-        //4: w_file_name = "weight_itile0_otile0_kij4.txt";
-        //5: w_file_name = "weight_itile0_otile0_kij5.txt";
-        //6: w_file_name = "weight_itile0_otile0_kij6.txt";
-        //7: w_file_name = "weight_itile0_otile0_kij7.txt";
-        //8: w_file_name = "weight_itile0_otile0_kij8.txt";
         0: w_file_name = "weight_0.txt";
         1: w_file_name = "weight_1.txt";
         2: w_file_name = "weight_2.txt";
@@ -213,15 +229,6 @@ module core_tb;
         8: w_file_name = "weight_8.txt";
       endcase
       case (kij)
-        //0: w_file_name = "weight_itile0_otile0_kij0.txt";
-        //1: w_file_name = "weight_itile0_otile0_kij1.txt";
-        //2: w_file_name = "weight_itile0_otile0_kij2.txt";
-        //3: w_file_name = "weight_itile0_otile0_kij3.txt";
-        //4: w_file_name = "weight_itile0_otile0_kij4.txt";
-        //5: w_file_name = "weight_itile0_otile0_kij5.txt";
-        //6: w_file_name = "weight_itile0_otile0_kij6.txt";
-        //7: w_file_name = "weight_itile0_otile0_kij7.txt";
-        //8: w_file_name = "weight_itile0_otile0_kij8.txt";
         0: psum_file_name = "psum_0.txt";
         1: psum_file_name = "psum_1.txt";
         2: psum_file_name = "psum_2.txt";
@@ -259,10 +266,6 @@ module core_tb;
       #0.5 clk = 1'b0;
       #0.5 clk = 1'b1;
 
-
-
-
-
       /////// Kernel data writing to memory ///////
 
       A_xmem  = 11'b10000000000;
@@ -274,7 +277,7 @@ module core_tb;
         WEN_xmem = 0;
         CEN_xmem = 0;
         if (t > 0) A_xmem = A_xmem + 1;
-        //$display("%b", D_xmem); 
+        //$display("%b", D_xmem);
         //$display("%b", core_instance.weight_sram.D);
         #0.5 clk = 1'b1;
       end
@@ -284,7 +287,18 @@ module core_tb;
       CEN_xmem = 1;
       A_xmem   = 0;
       #0.5 clk = 1'b1;
+
+      // verify that kernel data has been written
+      for (t = 0; t < col; t = t + 1) begin
+        if (wmem_sim[t] != core_instance.weight_sram.memory[t]) begin
+          $display("Unexpected value in weight SRAM!\n At address %d, expected %d but got %d", t,
+                   wmem_sim[t], core_instance.activation_sram.memory[t]);
+          $finish;
+        end
+      end
       /////////////////////////////////////
+      
+      /////// Zero out psum memory entries ///////
 
 
 
@@ -374,7 +388,6 @@ $display("Row 0, col 5 weight: %b\n", core_instance.corelet_instance.mac_array_i
 $display("Row 0, col 6 weight: %b\n", core_instance.corelet_instance.mac_array_instance.row_num[8].mac_row_instance.col_num[6].mac_tile_instance.b_q);
 $display("Row 0, col 7 weight: %b\n", core_instance.corelet_instance.mac_array_instance.row_num[8].mac_row_instance.col_num[7].mac_tile_instance.b_q);
 $display("Row 0, col 8 weight: %b\n", core_instance.corelet_instance.mac_array_instance.row_num[8].mac_row_instance.col_num[8].mac_tile_instance.b_q);
-         
 */
 
 

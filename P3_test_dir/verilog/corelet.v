@@ -19,14 +19,12 @@ module corelet (
   parameter col = 8;
 
   // constants for execution mode
-  localparam reg OS = 0;  // output stationary
-  localparam reg WS = 1;  // weight-stationary
 
   input clk, reset;
   input [33:0] inst;
-  input [col*bw-1:0] ififo_input;
+  input [col*psum_bw-1:0] ififo_input;
   input [row*bw-1:0] l0_input;
-  input execution_mode;
+  input execution_mode;  // 0: weight stationary; 1: output stationary
 
   input [col*psum_bw-1:0] sfp_input;
   input sfp_reset;
@@ -51,7 +49,7 @@ module corelet (
   wire ififo_full;
 
   // mac array
-  wire [col*bw-1:0] mac_north_input;
+  wire [col*psum_bw-1:0] mac_north_input;
 
   wire [col*psum_bw-1:0] mac_output;
   wire [col*psum_bw-1:0] sfp_output;
@@ -75,17 +73,9 @@ module corelet (
   wire execute_q;
   wire load_q;
 
-  localparam reg OS = 0;  // output stationary
-  localparam reg WS = 1;  // weight-stationary
-
   assign sfp_out = sfp_output;
 
   // changes for part 3:
-  // - have ififo draw from weight sram (need an extra input for that, called
-  // ififo_in)
-  // TODO:
-  // - if acc (or "negate shift out") bit is LOW, downward shift accumulated
-  // values instead of weights.
 
   // decode logic (just a simple mapping)
   assign acc_q = inst[33];
@@ -103,10 +93,8 @@ module corelet (
   assign execute_q = inst[1];
   assign load_q = inst[0];
 
-  // TODO: multiplex between straight 0s (for WS execute) or IFIFO (WS
-  // kernel load or OS execute)
-  assign mac_north_input =  /* TODO */ 0 ? {psum_bw * col{1'b0}} : ififo_output;
-
+  // in order to set accumulators to 0, must reset
+  assign mac_north_input = ififo_output;
 
   // MAC array
   mac_array #(
@@ -121,8 +109,11 @@ module corelet (
       .in_n(mac_north_input),
 
       .inst_w({
-        execute_q, load_q
-      }),  // instruction for MAC (kernel loading / execute)  // TODO: add extra bits for OS exec/flush
+        load_q & execution_mode,
+        execute_q & execution_mode,
+        execute_q & ~execution_mode,
+        load_q & ~execution_mode
+      }),  // instruction for MAC (kernel loading / execute)
       .valid(mac_array_valid_o)  // output valid for each column
   );
 
@@ -141,12 +132,12 @@ module corelet (
       .wr(l0_wr_q),  // L0 write enable
 
       .o_full (l0_full),
-      .o_ready(l0_ready),
+      .o_ready(l0_ready)
   );
 
   // IFIFO (weights for kernel loading or output-stationary execute)
   l0 #(
-      .bw (bw),
+      .bw (psum_bw),
       .row(col)
   ) ififo (
       .clk  (clk),
@@ -158,8 +149,8 @@ module corelet (
       .rd(ififo_rd_q),  // ififo read enable
       .wr(ififo_wr_q),  // L0 write enable
 
-      .o_full (  /* TODO */),
-      .o_ready(  /* TODO */),
+      .o_full (),  // unused?
+      .o_ready()  // unused?
   );
 
   // SFU: accumulate + relu
