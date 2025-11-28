@@ -1,12 +1,14 @@
-module core (clk, inst, ofifo_valid, D_xmem, sfp_out, xw_mode, reset, sfp_reset, act_mode, relu_en, pmem_mode);
+module core (clk, inst, ofifo1_valid, ofifo2_valid, D1_xmem, D2_xmem, sfp1_out, sfp2_out, xw_mode, reset, sfp_reset, act_mode, relu_en, pmem_mode);
 
   parameter bw = 4;
   parameter psum_bw = 16;
   parameter col = 8;
   parameter row = 8;
-  
+  parameter pmem_idx = 11;
+  parameter pmem_depth = 1 << pmem_idx;
+
   input clk, reset, sfp_reset;
-  input [35:0] inst;
+  input [33:0] inst;
   input [row*bw-1:0] D1_xmem;
   input [row*bw-1:0] D2_xmem;
   input xw_mode; // x if 0, w if 1
@@ -28,7 +30,8 @@ module core (clk, inst, ofifo_valid, D_xmem, sfp_out, xw_mode, reset, sfp_reset,
   wire [col*psum_bw-1:0] psum2_sram_output;
   wire [col*psum_bw-1:0] ofifo1_output;
   wire [col*psum_bw-1:0] ofifo2_output;
-  wire [col*psum_bw-1:0] pmem_input;
+  wire [col*psum_bw-1:0] pmem1_input;
+  wire [col*psum_bw-1:0] pmem2_input;
 
   reg  [col*psum_bw-1:0] sfp1_out_q;
   reg  [col*psum_bw-1:0] sfp2_out_q;
@@ -42,7 +45,7 @@ module core (clk, inst, ofifo_valid, D_xmem, sfp_out, xw_mode, reset, sfp_reset,
   corelet #(.bw(bw), .psum_bw(psum_bw), .row(row), .col(col)) corelet1_instance (
     .clk(clk),
     .reset(reset),
-    .inst(inst),
+    .inst(inst[7:0]),
     .ofifo_valid(ofifo1_valid),
     .l0_input(l01_input),
     .ofifo_output(ofifo1_output),
@@ -57,7 +60,7 @@ module core (clk, inst, ofifo_valid, D_xmem, sfp_out, xw_mode, reset, sfp_reset,
   corelet #(.bw(bw), .psum_bw(psum_bw), .row(row), .col(col)) corelet2_instance (
     .clk(clk),
     .reset(reset),
-    .inst(inst),
+    .inst(inst[7:0]),
     .ofifo_valid(ofifo2_valid),
     .l0_input(l02_input),
     .ofifo_output(ofifo2_output),
@@ -70,48 +73,48 @@ module core (clk, inst, ofifo_valid, D_xmem, sfp_out, xw_mode, reset, sfp_reset,
   );
 
 
-  sram #(.SIZE(1024), .WIDTH(bw*row), .ADD_WIDTH(10)) activation_sram (
+  sram #(.SIZE(2048), .WIDTH(bw*row), .ADD_WIDTH(11)) activation_sram (
     .CLK(clk),
-    .WEN(inst[18] | xw_mode),
-    .CEN(inst[19] | xw_mode),
+    .WEN(inst[8] | xw_mode),
+    .CEN(inst[9] | xw_mode),
     .D(D1_xmem),
-    .A(inst[16:7]),
+    .A(inst[22:12]),
     .Q(act_sram_output)
   );
 
-  sram #(.SIZE(1024), .WIDTH(bw*row), .ADD_WIDTH(10)) weight_sram1 (
+  sram #(.SIZE(2048), .WIDTH(bw*row), .ADD_WIDTH(11)) weight1_sram (
     .CLK(clk),
-    .WEN(inst[18] | !xw_mode),
-    .CEN(inst[19] | !xw_mode),
+    .WEN(inst[8] | !xw_mode),
+    .CEN(inst[9] | !xw_mode),
     .D(D1_xmem),
-    .A(inst[16:7]),
+    .A(inst[22:12]),
     .Q(w1_sram_output)
   );
 
-  sram #(.SIZE(2048), .WIDTH(bw*row), .ADD_WIDTH(11)) weight_sram2 (
+  sram #(.SIZE(2048), .WIDTH(bw*row), .ADD_WIDTH(11)) weight2_sram (
     .CLK(clk),
-    .WEN(inst[18] | !xw_mode),
-    .CEN(inst[19] | !xw_mode),
+    .WEN(inst[8] | !xw_mode),
+    .CEN(inst[9] | !xw_mode),
     .D(D2_xmem),
-    .A(inst[16:7]),
+    .A(inst[22:12]),
     .Q(w2_sram_output)
   );
 
-  sram #(.SIZE(2048), .WIDTH(psum_bw*col), .ADD_WIDTH(11)) psum_sram1 (
+  sram #(.SIZE(pmem_depth), .WIDTH(psum_bw*col), .ADD_WIDTH(pmem_idx)) psum1_sram (
     .CLK(clk),
-    .WEN(inst[33]),
-    .CEN(inst[34]),
+    .WEN(inst[10]),
+    .CEN(inst[11]),
     .D(pmem1_input),
-    .A(inst[30:20]),
+    .A(inst[23+pmem_idx-1:23]),
     .Q(psum1_sram_output)
   );
 
-  sram #(.SIZE(2048), .WIDTH(psum_bw*col), .ADD_WIDTH(11)) psum_sram2 (
+  sram #(.SIZE(pmem_depth), .WIDTH(psum_bw*col), .ADD_WIDTH(pmem_idx)) psum2_sram (
     .CLK(clk),
-    .WEN(inst[33]),
-    .CEN(inst[34]),
+    .WEN(inst[10]),
+    .CEN(inst[11]),
     .D(pmem2_input),
-    .A(inst[30:20]),
+    .A(inst[23+pmem_idx-1:23]),
     .Q(psum2_sram_output)
   );
 
