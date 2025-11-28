@@ -36,13 +36,12 @@ wire [col-1:0] sfp_valid_o;
 reg [3*col-1:0] shift_mac_array_valid_o_q;
 
 
-wire [col*psum_bw-1:0] ififo_out;   // to MAC array in_n
-wire [col-1:0] ififo_wr;  // write enable per column
-wire ififo_rd;            // read enable (MAC array consumes)
-wire ififo_full;
-wire ififo_ready;
-wire ififo_valid;
-
+wire [col*psum_bw-1:0] psum_fifo_out; // out of the psum L0 (feeds mac in_n)
+wire psum_fifo_wr;   // write single-cycle when core presents a new psum-vector
+wire psum_fifo_rd;   // read single-cycle when MAC consumes one vector
+wire psum_fifo_ready; // L0 can accept a write
+wire psum_fifo_full;
+wire psum_fifo_valid; // L0 has data available
 assign sfp_out = sfp_output;
 
 // MAC array
@@ -51,8 +50,8 @@ assign sfp_out = sfp_output;
     .reset(reset),
     .out_s(mac_output),    // output connected to SFU
     .in_w(l0_output), // I'm not sure if this is safe, or needs to be guarded by a control bit to make sure that l0_output is currently in weight loading mode.
-    .in_n(ififo_out),
-    .inst_w({inst[1], inst[0]}),  // instruction for MAC (kernel loading / execute)
+    .in_n(psum_fifo_out),
+    .inst_w({inst[1], inst[0]}),  // now fed from psum_l0
     .valid(mac_array_valid_o)    // output valid for each column
   );
 
@@ -94,18 +93,19 @@ assign sfp_out = sfp_output;
     .o_valid(ofifo_valid)
   );
 
-  // PSUM SRAM to IFIFO to MAC_ARRAY
-  ififo #(.col(col), .bw(psum_bw)) ififo_instance (
+  // PSUM FIFO (L0)
+  l0 #(.bw(psum_bw), .row(col)) psum_l0 (
     .clk(clk),
-    .in(sfp_input),      // from psum SRAM
-    .out(ififo_out),         // Data output from IFIFO to MAC array (in_n of MAC)
-    .rd(ififo_rd),          // MAC read enable (psums read), only asserted if MAC is ready and FIFO has valid data
-    .wr(ififo_wr),         // write enable from SRAM valid, set when SRAM has valid data and IFIFO not full
-    .i_full(ififo_full),          // FIFO full flag
+    .in(sfp_input),          // core will present one psum-vector per cycle during load
+    .out(psum_fifo_out),     // drives mac_array in_n
+    .rd(psum_fifo_rd),       // asserted when MAC wants PSUMs (mac_exec & psum_fifo_valid)
+    .wr(psum_fifo_wr),       // asserted during load when psum_l0 o_ready is true
+    .o_full(psum_fifo_full),
     .reset(reset),
-    .i_ready(ififo_ready),         // FIFO can accept more writes
-    .i_valid(ififo_valid)          // FIFO has valid data for MAC array
+    .o_ready(psum_fifo_ready),
+    .xw_mode(1'b0)           // not using xw_mode for PSUM storage
 );
+
 
   always @(posedge clk) begin
     if (reset) begin
@@ -117,34 +117,37 @@ assign sfp_out = sfp_output;
     end
   end
 
-  reg load_active;          // indicates the controller is in the phase of loading a psum tile into IFIFO
-  reg [2:0] load_count;     // count how many vectors have been loaded into the IFIFO so far during the current load_active session
-  wire mac_exec = inst[33];     // inst[33] (MAC execute) and by IFIFO having valid data.
-  assign ififo_rd = mac_exec & ififo_valid; // MAC pulls when executing and IFIFO has data
+  reg load_active;      // indicates we are in the phase of loading a PSUM tile from SRAM into psum_l0
+  reg [2:0] load_count;   // counts how many vectors have been accepted into psum_l0 so far
 
-  always @(posedge clk) begin   // Start loading when psum_ready pulse is seen
+  wire mac_exec = inst[33];                // MAC execute bit
+  assign psum_fifo_rd = mac_exec; // MAC reads a PSUM vector when executing
+
+  always @(posedge clk) begin
     if (reset) begin
         load_active <= 1'b0;
         load_count <= 0;
     end else begin
-        if (psum_ready && !load_active) begin   // start load when tile_done pulse arrives
+        if (psum_ready && !load_active) begin
+            // start the load sequence, core must present psum sram outputs at sfp_input
             load_active <= 1'b1;
             load_count <= 0;
-        end else if (load_active) begin   // only increment count when IFIFO actually accepts a word 
-            if (ififo_ready) begin      // only increment count when IFIFO actually accepts a word
-                // When ififo_ready is true we assert wr for that cycle
+        end else if (load_active) begin
+            // only count a load when psum_l0 accepted the word (when o_ready true, we assert wr this cycle)
+            if (psum_fifo_ready) begin
                 if (load_count == row - 1) begin
-                    load_active <= 1'b0;  // finished loading the tile
+                    // finished loading all row vectors for this tile
+                    load_active <= 1'b0;
                     load_count <= 0;
                 end else begin
-                    load_count <= load_count + 1;   // continue loading
+                    load_count <= load_count + 1;
                 end
             end
         end
     end
   end
 
-  assign ififo_wr = {col{ (load_active & ififo_ready) }};
+  assign psum_fifo_wr = (load_active & psum_fifo_ready);    // ensures no overflow (if psum_l0 is temporarily full, pause the load until o_ready becomes true)
 
 
 endmodule
