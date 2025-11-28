@@ -23,6 +23,8 @@ module core (clk, inst, ofifo_valid, D_xmem, sfp_out, xw_mode, reset, sfp_reset,
   wire [col*psum_bw-1:0] pmem_input;
 
   reg  [col*psum_bw-1:0] sfp_out_q;
+  reg [6:0] psum_write_count;
+  reg tile_done;
 
   assign l0_input = ({row*bw{!xw_mode}} & act_sram_output) |  ({row*bw{xw_mode}} & w_sram_output);
 
@@ -39,7 +41,8 @@ module core (clk, inst, ofifo_valid, D_xmem, sfp_out, xw_mode, reset, sfp_reset,
     .sfp_out(sfp_out),
     .xw_mode(xw_mode),
     .sfp_reset(sfp_reset),
-    .relu_en(relu_en)
+    .relu_en(relu_en),
+    .psum_ready(tile_done)    // previous tile psum all loaded into sram, ready to be loaded into ififo
   );
 
 
@@ -74,5 +77,24 @@ module core (clk, inst, ofifo_valid, D_xmem, sfp_out, xw_mode, reset, sfp_reset,
 	  sfp_out_q <= sfp_out;
   end
 
+  wire psum_write_enable = (!inst[32]) && (!inst[31]);  // SRAM write
+
+  always @(posedge clk) begin
+    if (reset) begin
+      psum_write_count <= 0;
+      tile_done <= 0;
+    end else begin
+      tile_done <= 0;
+
+      if (psum_write_enable) begin
+        if (psum_write_count == (row*col - 1)) begin
+          tile_done <= 1;         // 1-cycle pulse
+          psum_write_count <= 0;  // reset for next tile
+        end else begin
+          psum_write_count <= psum_write_count + 1;
+        end
+      end
+    end
+  end
 
 endmodule
