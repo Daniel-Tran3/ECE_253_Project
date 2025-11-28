@@ -46,7 +46,8 @@ module sfp (clk, reset, in_psum, valid_in, out_accum, wr_ofifo, o_valid, relu_en
             end
 
             // output mapping & ReLU
-            assign out_accum[(k+1)*psum_bw-1 : k*psum_bw] = (acc_reg[k] < 0) ? ({psum_bw{lrelu_en}} & acc_reg[k] >>> shift) : acc_reg[k];
+	    assign out_accum[(k+1)*psum_bw-1 : k*psum_bw] = (acc_reg[k] < 0) ? ({psum_bw{lrelu_en}} & 
+		    (({psum_bw{1'b1}} ^ ({psum_bw{1'b1}} >> shift)) | acc_reg[k] >>> shift)) : acc_reg[k];
 
 
         end

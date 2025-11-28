@@ -52,8 +52,8 @@ reg load_q = 0;
 reg acc_q = 0;
 reg acc = 0;
 reg pool = 0;
-reg lrelu_en = 0;
-reg relu_en = 1;
+reg lrelu_en = 1;
+reg relu_en = 0;
 reg [1:0] shift = 1;
 
 reg [pmem_index-1:0] A_pmem_sfp = 0;
@@ -115,7 +115,8 @@ core  #(.bw(bw), .col(col), .row(row), .pmem_index(pmem_index)) core_instance (
 	.sfp_reset(sfp_reset),
 	.relu_en(relu_en),
 	.lrelu_en(lrelu_en),
-	.pmem_mode(pmem_mode)); 
+	.pmem_mode(pmem_mode),
+	.shift(shift)); 
 
 
 initial begin 
@@ -135,6 +136,7 @@ initial begin
   pmem_mode = 0;
   relu_en  = 0;
   lrelu_en  = 1;
+  shift    = 1;
 
   $dumpfile("core_tb.vcd");
   $dumpvars(0,core_tb);
@@ -486,7 +488,7 @@ $display("Row 0, col 8 weight: %b\n", core_instance.corelet_instance.mac_array_i
 
     for (j=0; j<len_kij+1; j=j+1) begin 
 
-      #0.5 clk = 1'b0;   relu_en = 0;
+      #0.5 clk = 1'b0;   relu_en = 0; lrelu_en = 1;
       if (j<len_kij) begin 
 		    CEN_pmem = 0; WEN_pmem = 1; 
         //acc_scan_file = $fscanf(acc_file,"%11b", A_pmem);
