@@ -21,7 +21,7 @@ reg             load_ready_q;
 
 
 wire is_zero;
-assign is_zero = (a_q == 0);
+assign is_zero = (a_q == 0) || (b_q == 0) ;
 reg signed [bw-1:0] a_gated; //holds the logic stable if input is zero. Informs multiplier ahead not to perform any action.
 
 always @(*) begin
