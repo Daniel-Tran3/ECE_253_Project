@@ -65,7 +65,7 @@ reg [bw*row-1:0] D2_xmem;
 reg [psum_bw*col-1:0] answer1;
 reg [psum_bw*col-1:0] answer2;
 
-integer layers;
+integer layer;
 
 integer nij = 0;
 reg post_ex = 0;
@@ -157,7 +157,7 @@ initial begin
 
   $dumpfile("core_tb.vcd");
   $dumpvars(0,core_tb);
-  for (layers = 0; layers < 4; layers = layers + 1) begin
+  for (layer = 0; layer < 4; layer = layer + 1) begin
 	  //////// Reset /////////
 	  #0.5 clk = 1'b0;   reset = 1; sfp_reset = 1;
 	  #0.5 clk = 1'b1; 
@@ -168,7 +168,7 @@ initial begin
 	  end
 
 	  #0.5 clk = 1'b0;   reset = 0; xw_mode = 0; sfp_reset = 0;
-	  if (layers < 2) begin
+	  if (layer < 2) begin
 		  act_mode = 1;
 		  //tiles = 1;
 	  end else begin
@@ -218,56 +218,55 @@ initial begin
 	      $display("Kij %d\n", kij);
 	      //if (tile == 0) begin
           if (act_mode) begin
-            if (layer[0])
-		  case(kij)
-		          0: w1_file_name = "Layer0/Tile0/weight_0.txt";
-		          1: w1_file_name = "Layer0/Tile0/weight_1.txt";
-		          2: w1_file_name = "Layer0/Tile0/weight_2.txt";
-		          3: w1_file_name = "Layer0/Tile0/weight_3.txt";
-		          4: w1_file_name = "Layer0/Tile0/weight_4.txt";
-		          5: w1_file_name = "Layer0/Tile0/weight_5.txt";
-		          6: w1_file_name = "Layer0/Tile0/weight_6.txt";
-		          7: w1_file_name = "Layer0/Tile0/weight_7.txt";
-		          8: w1_file_name = "Layer0/Tile0/weight_8.txt";
-		        endcase
-		        case(kij)
-		          0: psum1_file_name = "Layer0/Tile0/psum_0.txt";
-		          1: psum1_file_name = "Layer0/Tile0/psum_1.txt";
-		          2: psum1_file_name = "Layer0/Tile0/psum_2.txt";
-		          3: psum1_file_name = "Layer0/Tile0/psum_3.txt";
-		          4: psum1_file_name = "Layer0/Tile0/psum_4.txt";
-		          5: psum1_file_name = "Layer0/Tile0/psum_5.txt";
-		          6: psum1_file_name = "Layer0/Tile0/psum_6.txt";
-		          7: psum1_file_name = "Layer0/Tile0/psum_7.txt";
-		          8: psum1_file_name = "Layer0/Tile0/psum_8.txt";
-		        endcase
-		end else begin
-		case(kij)
-		          0: w1_file_name = "Layer1/Tile0/weight_0.txt";
-		          1: w1_file_name = "Layer1/Tile0/weight_1.txt";
-		          2: w1_file_name = "Layer1/Tile0/weight_2.txt";
-		          3: w1_file_name = "Layer1/Tile0/weight_3.txt";
-		          4: w1_file_name = "Layer1/Tile0/weight_4.txt";
-		          5: w1_file_name = "Layer1/Tile0/weight_5.txt";
-		          6: w1_file_name = "Layer1/Tile0/weight_6.txt";
-		          7: w1_file_name = "Layer1/Tile0/weight_7.txt";
-		          8: w1_file_name = "Layer1/Tile0/weight_8.txt";
-		        endcase
-		        case(kij)
-		          0: psum1_file_name = "Layer1/Tile0/psum_0.txt";
-		          1: psum1_file_name = "Layer1/Tile0/psum_1.txt";
-		          2: psum1_file_name = "Layer1/Tile0/psum_2.txt";
-		          3: psum1_file_name = "Layer1/Tile0/psum_3.txt";
-		          4: psum1_file_name = "Layer1/Tile0/psum_4.txt";
-		          5: psum1_file_name = "Layer1/Tile0/psum_5.txt";
-		          6: psum1_file_name = "Layer1/Tile0/psum_6.txt";
-		          7: psum1_file_name = "Layer1/Tile0/psum_7.txt";
-		          8: psum1_file_name = "Layer1/Tile0/psum_8.txt";
-		        endcase
-
-		end
+            if (layer%2 == 0) begin
+              case(kij)
+                0: w1_file_name = "Layer0/Tile0/weight_0.txt";
+                1: w1_file_name = "Layer0/Tile0/weight_1.txt";
+                2: w1_file_name = "Layer0/Tile0/weight_2.txt";
+                3: w1_file_name = "Layer0/Tile0/weight_3.txt";
+                4: w1_file_name = "Layer0/Tile0/weight_4.txt";
+                5: w1_file_name = "Layer0/Tile0/weight_5.txt";
+                6: w1_file_name = "Layer0/Tile0/weight_6.txt";
+                7: w1_file_name = "Layer0/Tile0/weight_7.txt";
+                8: w1_file_name = "Layer0/Tile0/weight_8.txt";
+              endcase
+              case(kij)
+                0: psum1_file_name = "Layer0/Tile0/psum_0.txt";
+                1: psum1_file_name = "Layer0/Tile0/psum_1.txt";
+                2: psum1_file_name = "Layer0/Tile0/psum_2.txt";
+                3: psum1_file_name = "Layer0/Tile0/psum_3.txt";
+                4: psum1_file_name = "Layer0/Tile0/psum_4.txt";
+                5: psum1_file_name = "Layer0/Tile0/psum_5.txt";
+                6: psum1_file_name = "Layer0/Tile0/psum_6.txt";
+                7: psum1_file_name = "Layer0/Tile0/psum_7.txt";
+                8: psum1_file_name = "Layer0/Tile0/psum_8.txt";
+              endcase
+            end else begin
+              case(kij)
+                0: w1_file_name = "Layer1/Tile0/weight_0.txt";
+                1: w1_file_name = "Layer1/Tile0/weight_1.txt";
+                2: w1_file_name = "Layer1/Tile0/weight_2.txt";
+                3: w1_file_name = "Layer1/Tile0/weight_3.txt";
+                4: w1_file_name = "Layer1/Tile0/weight_4.txt";
+                5: w1_file_name = "Layer1/Tile0/weight_5.txt";
+                6: w1_file_name = "Layer1/Tile0/weight_6.txt";
+                7: w1_file_name = "Layer1/Tile0/weight_7.txt";
+                8: w1_file_name = "Layer1/Tile0/weight_8.txt";
+              endcase
+              case(kij)
+                0: psum1_file_name = "Layer1/Tile0/psum_0.txt";
+                1: psum1_file_name = "Layer1/Tile0/psum_1.txt";
+                2: psum1_file_name = "Layer1/Tile0/psum_2.txt";
+                3: psum1_file_name = "Layer1/Tile0/psum_3.txt";
+                4: psum1_file_name = "Layer1/Tile0/psum_4.txt";
+                5: psum1_file_name = "Layer1/Tile0/psum_5.txt";
+                6: psum1_file_name = "Layer1/Tile0/psum_6.txt";
+                7: psum1_file_name = "Layer1/Tile0/psum_7.txt";
+                8: psum1_file_name = "Layer1/Tile0/psum_8.txt";
+              endcase
+            end
           end else begin
-		  if (layer[0]) begin
+		  if (layer%2 == 0) begin
             		case(kij)
 		          0: w1_file_name = "Layer2/Tile0/weight_0.txt";
 		          1: w1_file_name = "Layer2/Tile0/weight_1.txt";
@@ -320,7 +319,7 @@ initial begin
 	      //end 
           //else begin
             if (act_mode) begin
-              if (layer[0]) begin  
+              if (layer%2 == 0) begin  
                 case(kij)
                   0: w2_file_name = "Layer0/Tile1/weight_0.txt";
                   1: w2_file_name = "Layer0/Tile1/weight_1.txt";
@@ -369,7 +368,7 @@ initial begin
 
               end
             end else begin
-              if (layer[0]) begin  
+              if (layer%2 == 0) begin  
                 case(kij)
                   0: w2_file_name = "Layer2/Tile1/weight_0.txt";
                   1: w2_file_name = "Layer2/Tile1/weight_1.txt";
@@ -405,19 +404,17 @@ initial begin
                   8: w2_file_name = "Layer3/Tile1/weight_8.txt";
                 endcase
                 case(kij)
-                  0: psum2_file_name = "Layer2/Tile1/psum_0.txt";
-                  1: psum2_file_name = "Layer2/Tile1/psum_1.txt";
-                  2: psum2_file_name = "Layer2/Tile1/psum_2.txt";
-                  3: psum2_file_name = "Layer2/Tile1/psum_3.txt";
-                  4: psum2_file_name = "Layer2/Tile1/psum_4.txt";
-                  5: psum2_file_name = "Layer2/Tile1/psum_5.txt";
-                  6: psum2_file_name = "Layer2/Tile1/psum_6.txt";
-                  7: psum2_file_name = "Layer2/Tile1/psum_7.txt";
-                  8: psum2_file_name = "Layer2/Tile1/psum_8.txt";
+                  0: psum2_file_name = "Layer3/Tile1/psum_0.txt";
+                  1: psum2_file_name = "Layer3/Tile1/psum_1.txt";
+                  2: psum2_file_name = "Layer3/Tile1/psum_2.txt";
+                  3: psum2_file_name = "Layer3/Tile1/psum_3.txt";
+                  4: psum2_file_name = "Layer3/Tile1/psum_4.txt";
+                  5: psum2_file_name = "Layer3/Tile1/psum_5.txt";
+                  6: psum2_file_name = "Layer3/Tile1/psum_6.txt";
+                  7: psum2_file_name = "Layer3/Tile1/psum_7.txt";
+                  8: psum2_file_name = "Layer3/Tile1/psum_8.txt";
                 endcase
-
               end
-
           end
 	      //end
 
@@ -612,15 +609,31 @@ initial begin
 	  	////////// Accumulation /////////
 	  	//if (tile == 0) begin
         if (act_mode) begin
-				  out1_file = $fopen("Layer0/Tile0/out.txt", "r");
+          if (layer%2 == 0) begin
+            out1_file = $fopen("Layer0/Tile0/out.txt", "r");
+          end else begin
+            out1_file = $fopen("Layer1/Tile0/out.txt", "r");
+          end
         end else begin
-				  out1_file = $fopen("Layer2/Tile0/out.txt", "r");
+				  if (layer%2 == 0) begin
+            out1_file = $fopen("Layer2/Tile0/out.txt", "r");
+          end else begin
+            out1_file = $fopen("Layer3/Tile0/out.txt", "r");
+          end
         end  
 	  	//end else begin
         if (act_mode) begin
-				  out2_file = $fopen("Layer0/Tile1/out.txt", "r");
+          if (layer%2 == 0) begin
+            out2_file = $fopen("Layer0/Tile1/out.txt", "r");
+          end else begin
+            out2_file = $fopen("Layer1/Tile1/out.txt", "r");
+          end
         end else begin
-				  out2_file = $fopen("Layer2/Tile1/out.txt", "r");
+				  if (layer%2 == 0) begin
+            out2_file = $fopen("Layer2/Tile1/out.txt", "r");
+          end else begin
+            out2_file = $fopen("Layer3/Tile1/out.txt", "r");
+          end
         end  
 
 		  //end
@@ -749,16 +762,36 @@ initial begin
 
 	  ////////// SFP output store to SRAM verification /////////
     //if (tile == 0) begin
-      if (act_mode) begin
-		    out1_file = $fopen("Layer0/Tile0/out.txt", "r");
-		    out2_file = $fopen("Layer0/Tile1/out.txt", "r");
-      end else begin
-			  out1_file = $fopen("Layer2/Tile0/out.txt", "r");
-			  out2_file = $fopen("Layer2/Tile1/out.txt", "r");
-      end  
-	 //end else begin
-		 //out_file = $fopen("Layer0/Tile1/out.txt", "r");  
-	 //end
+        if (act_mode) begin
+          if (layer%2 == 0) begin
+            out1_file = $fopen("Layer0/Tile0/out.txt", "r");
+          end else begin
+            out1_file = $fopen("Layer1/Tile0/out.txt", "r");
+          end
+        end else begin
+				  if (layer%2 == 0) begin
+            out1_file = $fopen("Layer2/Tile0/out.txt", "r");
+          end else begin
+            out1_file = $fopen("Layer3/Tile0/out.txt", "r");
+          end
+        end  
+	  	//end else begin
+        if (act_mode) begin
+          if (layer%2 == 0) begin
+            out2_file = $fopen("Layer0/Tile1/out.txt", "r");
+          end else begin
+            out2_file = $fopen("Layer1/Tile1/out.txt", "r");
+          end
+        end else begin
+				  if (layer%2 == 0) begin
+            out2_file = $fopen("Layer2/Tile1/out.txt", "r");
+          end else begin
+            out2_file = $fopen("Layer3/Tile1/out.txt", "r");
+          end
+        end  
+
+		  //end
+
 
 
 	  // Following three lines are to remove the first three comment lines of the file
