@@ -1,4 +1,4 @@
-module corelet (clk, reset, inst, l0_input, ofifo_valid, ofifo_output, xw_mode, sfp_out, sfp_reset, sfp_input, relu_en, psum_ready);
+module corelet (clk, reset, inst, l0_input, ofifo_valid, ofifo_output, xw_mode, sfp_out, sfp_reset, sfp_input, relu_en, psum_load_enable);
 
 parameter bw = 4;
 parameter psum_bw = 16;
@@ -14,7 +14,7 @@ input xw_mode;
 input sfp_reset;
 input relu_en;
 
-input psum_ready;   // pulse from core when PSUM tile has been fully written to SRAM
+input psum_load_enable;
 
 output [col*psum_bw-1:0] ofifo_output;
 output ofifo_valid;
@@ -128,7 +128,7 @@ assign sfp_out = sfp_output;
         load_active <= 1'b0;
         load_count <= 0;
     end else begin
-        if (psum_ready && !load_active) begin
+        if (psum_load_enable && !load_active) begin
             // start the load sequence, core must present psum sram outputs at sfp_input
             load_active <= 1'b1;
             load_count <= 0;

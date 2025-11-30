@@ -1,4 +1,4 @@
-module core (clk, inst, ofifo_valid, D_xmem, sfp_out, xw_mode, reset, sfp_reset,, relu_en, pmem_mode);
+module core (clk, inst, ofifo_valid, D_xmem, sfp_out, xw_mode, reset, sfp_reset, relu_en, pmem_mode, psum_load_enable);
 
   parameter bw = 4;
   parameter psum_bw = 16;
@@ -11,6 +11,7 @@ module core (clk, inst, ofifo_valid, D_xmem, sfp_out, xw_mode, reset, sfp_reset,
   input xw_mode; // x if 0, w if 1
   input pmem_mode; // write from OFIFO if 0, write from SFP if 1
   input relu_en;
+  input psum_load_enable;
 
   output [psum_bw*col-1:0] sfp_out;
   output ofifo_valid;
@@ -25,6 +26,9 @@ module core (clk, inst, ofifo_valid, D_xmem, sfp_out, xw_mode, reset, sfp_reset,
   reg  [col*psum_bw-1:0] sfp_out_q;
   reg [6:0] psum_write_count;
   reg tile_done;
+
+  wire psum_load_en_comb;
+  assign psum_load_en_comb = tile_done | psum_load_enable;
 
   assign l0_input = ({row*bw{!xw_mode}} & act_sram_output) |  ({row*bw{xw_mode}} & w_sram_output);
 
@@ -42,9 +46,8 @@ module core (clk, inst, ofifo_valid, D_xmem, sfp_out, xw_mode, reset, sfp_reset,
     .xw_mode(xw_mode),
     .sfp_reset(sfp_reset),
     .relu_en(relu_en),
-    .psum_ready(tile_done)    // previous tile psum all loaded into sram, ready to be loaded into ififo
+    .psum_load_enable(psum_load_en_comb)
   );
-
 
   sram #(.SIZE(2048), .WIDTH(bw*row), .ADD_WIDTH(11)) activation_sram (
     .CLK(clk),
@@ -77,21 +80,33 @@ module core (clk, inst, ofifo_valid, D_xmem, sfp_out, xw_mode, reset, sfp_reset,
 	  sfp_out_q <= sfp_out;
   end
 
+  /*
+   generate a signal that indicates when the core should write a PSUM vector
+   to the PSUM SRAM. The logic here says: write is enabled only when both
+   the CEN (chip enable) and WEN (write enable) are low.
+   (the SRAM is being accessed)
+   for a write operation. inst[32] = CEN, inst[31] = WEN 
+   */
   wire psum_write_enable = (!inst[32]) && (!inst[31]);  // SRAM write
-
+  
+  /*
+   count how many PSUM vectors have been written for the current tile, and 
+   generate a pulse (tile_done) when the entire tile has been written.
+  */
   always @(posedge clk) begin
     if (reset) begin
-      psum_write_count <= 0;
-      tile_done <= 0;
+      psum_write_count <= 0;    // reset counter on reset
+      tile_done <= 0;           // reset tile_done flag
     end else begin
-      tile_done <= 0;
+      tile_done <= 0;       // default tile_done to 0 every cycle
 
       if (psum_write_enable) begin
+        // If all vectors for this tile have been written, generate a 1-cycle pulse
         if (psum_write_count == (row*col - 1)) begin
-          tile_done <= 1;         // 1-cycle pulse
-          psum_write_count <= 0;  // reset for next tile
+          tile_done <= 1;         // tile_done goes high for one cycle
+          psum_write_count <= 0;    // reset counter for next tile
         end else begin
-          psum_write_count <= psum_write_count + 1;
+          psum_write_count <= psum_write_count + 1;   // Increment counter for each PSUM vector written
         end
       end
     end

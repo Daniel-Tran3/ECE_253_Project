@@ -72,6 +72,7 @@ reg [8*30:1] w_file_name;
 reg [8*30:1] psum_file_name;
 wire ofifo_valid;
 wire [col*psum_bw-1:0] sfp_out;
+reg psum_load_enable;
 
 integer x_file, x_scan_file ; // file_handler
 integer w_file, w_scan_file ; // file_handler
@@ -79,7 +80,7 @@ integer acc_file, acc_scan_file ; // file_handler
 integer out_file, out_scan_file ; // file_handler
 integer psum_file, psum_scan_file ; // file_handler
 integer captured_data; 
-integer t, i, j, k, kij;
+integer t, i, j, k, kij, r;
 integer error;
 
 assign inst_q[33] = acc_q;
@@ -110,7 +111,6 @@ core  #(.bw(bw), .col(col), .row(row)) core_instance (
 	.relu_en(relu_en_q),
 	.pmem_mode(pmem_mode)); 
 
-
 initial begin 
 
   inst_w   = 0; 
@@ -126,6 +126,7 @@ initial begin
   execute  = 0;
   load     = 0;
   pmem_mode = 0;
+  psum_load_enable = 0;
 
   $dumpfile("core_tb.vcd");
   $dumpvars(0,core_tb);
@@ -405,8 +406,6 @@ $display("Row 0, col 7 act: %b\n", core_instance.corelet_instance.mac_array_inst
 $display("Row 0, col 8 act: %b\n", core_instance.corelet_instance.mac_array_instance.row_num[8].mac_row_instance.col_num[8].mac_tile_instance.a_q);
 */    
 end
-      
-      
 
     // Wait for last element to be delivered to bottom
     for (t = 0; t < len_nij*2; t=t+1) begin
@@ -628,9 +627,40 @@ end
     #0.5 clk = 1'b1;  
   end
 
+  ////////// PSUM SRAM -> corelet psum_l0 load verification /////////
+  $display("\n--- Starting PSUM SRAM -> psum_l0 load verification ---\n");
+  // wait (core_instance.tile_done == 1'b1);   // testbench should start feeding psum from sram to l0
+  
+  // for test control here we assert psum_load_enable from the TB so the corelet starts loading psums from the PSUM SRAM into the psum_l0
+  psum_load_enable = 1;
+
+  $display("Tile done, starting L0 load verification...\n");
+
+  i = 0; // row index
+  while (i < row) begin
+    #0.5 clk = 1'b0;
+
+    // On rising edge, check if L0 accepted a new PSUM vector
+    #0.5 clk = 1'b1;
+
+    // When both signals are true, the L0 accepted a new vector (seems to never go into this loop)
+    if (core_instance.corelet_instance.psum_fifo_wr && core_instance.corelet_instance.psum_fifo_ready) begin
+        // Capture the vector that is being presented to the FIFO.
+        // sfp_input is the bus the core connected to psum_l0.in  (psum_sram might not be the right value)
+        if (core_instance.corelet_instance.sfp_input !== core_instance.psum_sram.Q) begin
+            $display("Row %0d: MISMATCH! Got %h, Expected %h", i, core_instance.corelet_instance.sfp_input, core_instance.psum_sram.Q);
+            error = 1;
+        end else begin
+            $display("Row %0d: match: %h", i, core_instance.corelet_instance.sfp_input);
+        end
+        i = i + 1; // move to next row vector
+    end
+  end
+
   #10 $finish;
 
 end
+
 
 always @ (posedge clk) begin
    inst_w_q   <= inst_w; 
