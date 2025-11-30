@@ -51,23 +51,25 @@ module mac_tile (
   output [inst_width-1:0] inst_e;  // instruction eastward passthrough
 
   // instrucion decode
-  wire os_flush;
-  wire os_exec;
-  wire ws_exec;
-  wire ws_kernld;
+  wire                  os_flush;
+  wire                  os_exec;
+  wire                  ws_exec;
+  wire                  ws_kernld;
   // write enable control bits
-  reg                a_wr;
-  reg                b_wr;
-  reg                c_wr;
+  reg                   a_wr;
+  reg                   b_wr;
+  reg                   c_wr;
 
   // data wires for internal registers that aren't so obvious
-  reg                c_d;
+  reg  [        bw-1:0] a_d;
+  reg  [   psum_bw-1:0] c_d;
 
-  reg  [        inst_width-1:0] inst_q;  // instruction register
-  reg  [     bw-1:0] a_q;  // leftward register (activation)
-  reg  [     bw-1:0] b_q;  // weight OR northward register
-  reg  [psum_bw-1:0] c_q;  // accumulated value
-  wire [psum_bw-1:0] mac_out;
+  reg  [inst_width-1:0] inst_q;  // instruction register
+  reg  [        bw-1:0] a_q;  // leftward register (activation)
+  reg  [        bw-1:0] b_q;  // weight OR northward register
+  reg  [   psum_bw-1:0] c_q;  // accumulated value
+  reg                   kern_ld_ready;
+  wire [   psum_bw-1:0] mac_out;
 
   // decoded instruction
   assign os_flush  = inst_q[3];
@@ -76,11 +78,12 @@ module mac_tile (
   assign ws_kernld = inst_q[0];
 
 
-  always @(os_flush, os_exec, ws_exec, ws_kernld, b_q, c_q, mac_out, in_n) begin : comb_logic
+  always @(*) begin : comb_logic
 
-    // decide what to send southbound (3 way mux ew)
-    out_s = b_q;  // emit weight by default, for kernel loading and OS exec
-    if (ws_exec) out_s = mac_out;  // emit mac output when executing for WS
+    // decide what to send southbound
+    out_s = {{psum_bw-bw{1'b0}}, b_q};  // emit weight by default, for OS exec
+    if (ws_kernld) out_s = {{psum_bw-bw{1'b0}}, a_q};  // if loading kernel in WS, send a_q.
+    else if (ws_exec) out_s = mac_out;  // emit mac output when executing for WS
     else if (os_flush) out_s = c_q;  // emit c_q when writing for OS
 
     // control the c (accumulator) register
@@ -88,11 +91,10 @@ module mac_tile (
     c_d  = os_exec ? mac_out : in_n;
 
     // control the b (weight) register
-    b_wr = ws_kernld | os_exec;
+    b_wr = (ws_kernld && kern_ld_ready) | os_exec;
 
-    // while a_q assignment is simple, we still want to gate its write.
-    // to maybe conserve power in idle?
-    a_wr = ws_exec | os_exec;
+    a_wr = ws_kernld | ws_exec | os_exec;
+    a_d  = ws_kernld ? in_n[3:0] : in_w;
 
     // inst_q does not require complex logic
   end
@@ -112,14 +114,16 @@ module mac_tile (
 
   always @(posedge clk) begin : seq_logic
     if (reset) begin
-      inst_q <= 2'b00;
+      inst_q <= 4'b0000;
+      kern_ld_ready <= 1'b1;
       // TODO: see if it's feasible to load 0s into accumulators during OS flush
       // by reading in 0s from pmem into IFIFO beforehand
       // c_q <= 0; // if OS, c_q must start at 0
     end else begin
       inst_q <= inst_w;
-      if (a_wr) a_q <= in_w;
-      if (b_wr) b_q <= in_n;
+      if (ws_kernld) kern_ld_ready <= 0;
+      if (a_wr) a_q <= a_d;
+      if (b_wr) b_q <= in_n[bw-1:0];
       if (c_wr) c_q <= c_d;  // see comb_logic
     end
   end

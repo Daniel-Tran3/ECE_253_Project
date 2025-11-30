@@ -28,6 +28,7 @@ module mac_array (
 
 
   reg    [inst_width*row-1:0] inst_w_temp;
+  reg    [row-1:0] kern_ld_delay_buf;
   wire   [psum_bw*col*(row+1)-1:0] temp;
   wire   [row*col-1:0] valid_temp;
 
@@ -35,7 +36,7 @@ module mac_array (
   genvar i;
 
   assign out_s = temp[psum_bw*col*9-1:psum_bw*col*8];
-  assign temp[psum_bw*col*1-1:psum_bw*col*0] = 0;
+  assign temp[psum_bw*col*1-1:psum_bw*col*0] = in_n;
   assign valid = valid_temp[row*col-1:row*col-8];
 
   generate
@@ -58,16 +59,31 @@ module mac_array (
 
 
   always @(posedge clk) begin
-    inst_w_temp[inst_width-1:0] <= inst_w;
+    if (reset) begin
+      inst_w_temp[inst_width-1:0] <= 0;
+    end else begin
+      inst_w_temp[inst_width-1:0] <= inst_w;
+    end
   end
   for (i = 0; i < row; i = i + 1) begin
     always @(posedge clk) begin
-      // we only unconditionally shift the low 3 bits of instructions
-      inst_w_temp[inst_width*(i+1)-2:inst_width*i] <= inst_w_temp[inst_width*i-2:inst_width*(i-1)];
-      // instantly propagate the os-flush bit to all rows' instructions if it
-      // is set in inst_w. Rely on the programmer to avoid instruction one-hot
-      // encoding contention. Otherwise, shift up as normal
-      inst_w_temp[inst_width*(i+1)-1] = inst_w[3] ? 1'b1 : inst_w_temp[inst_width*i-1];
+      if (reset) begin
+        inst_w_temp[inst_width*(i+1)+inst_width-1:inst_width*(i+1)] <= 0;
+        kern_ld_delay_buf[i] <= 1'b0;
+      end else begin
+        // only the middle 2 bits of instructions get shifted normally
+        inst_w_temp[inst_width*(i+1)+2:inst_width*(i+1)+1] <= inst_w_temp[inst_width*i+2:inst_width*i+1];
+
+        // delay propagation of the 0 bit (kernel loading instruction)
+        // by adding intermediate bits in between
+        kern_ld_delay_buf[i] <= inst_w_temp[inst_width*i];
+        inst_w_temp[inst_width*(i+1)] <= kern_ld_delay_buf[i];
+
+        // instantly propagate the os-flush bit to all rows' instructions if it
+        // is set in inst_w. Rely on the programmer to avoid instruction one-hot
+        // encoding contention. Otherwise, shift up as normal
+        inst_w_temp[inst_width*(i+1)+3] <= inst_w[3] ? 1'b1 : inst_w_temp[inst_width*i+3];
+      end
     end
   end
 

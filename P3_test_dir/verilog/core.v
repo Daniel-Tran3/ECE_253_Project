@@ -35,7 +35,7 @@ module core (
   // constants for execution mode
 
   input clk, reset, sfp_reset;
-  input [33:0] inst;
+  input [44:0] inst;
   input [row*bw-1:0] D_xmem;
   input [col*psum_bw-1:0] D_pmem;
   input xw_mode;  // x if 0, w if 1
@@ -62,12 +62,12 @@ module core (
   assign l0_input = xw_mode ? w_sram_output : act_sram_output;
 
   genvar i;
-  for (i = 0; i < col; i=i+1) begin
+  for (i = 0; i < col; i = i + 1) begin
     assign weight_sram_expanded[i*psum_bw+bw-1:i*psum_bw] = w_sram_output[bw*(i+1)-1:bw*i];
-    assign weight_sram_expanded[(i+1)*psum_bw-1:i*psum_bw+bw] = {(psum_bw-bw){1'b0}};
+    assign weight_sram_expanded[(i+1)*psum_bw-1:i*psum_bw+bw] = {(psum_bw - bw) {1'b0}};
   end
-  assign ififo_input = ififo_mode ? weight_sram_expanded : psum_sram_output;
-  assign pmem_input = pmem_mode[1] ? D_pmem : (pmem_mode[0] ? sfp_out_q : ofifo_output);
+  assign ififo_input = ififo_mode ? psum_sram_output : weight_sram_expanded;
+  assign pmem_input  = pmem_mode[1] ? D_pmem : (pmem_mode[0] ? sfp_out_q : ofifo_output);
 
   corelet #(
       .bw(bw),
@@ -80,7 +80,7 @@ module core (
       .reset(reset),
 
       // inputs
-      .inst(inst),
+      .inst(inst[33:0]),  // top 11 bits aren't used by corelet
       .ififo_input(ififo_input),
       .l0_input(l0_input),
       .execution_mode(execution_mode),
@@ -88,7 +88,7 @@ module core (
       // sfp control
       .sfp_input(psum_sram_output),
       .sfp_reset(sfp_reset),
-      .relu_en(relu_en),
+      .relu_en  (relu_en),
 
       // outputs
       .ofifo_output(ofifo_output),
@@ -123,17 +123,18 @@ module core (
       .Q  (w_sram_output)
   );
 
-  sram #(
+  rw_sram #(
       .SIZE(2048),
       .WIDTH(psum_bw * col),
       .ADD_WIDTH(11)
   ) psum_sram (
       .CLK(clk),
-      .WEN(inst[31]),
-      .CEN(inst[32]),
       .D  (pmem_input),
-      .A  (inst[30:20]),
-      .Q  (psum_sram_output)
+      .Q  (psum_sram_output),
+      .CEN(inst[32]),
+      .WEN(inst[31]),
+      .WA (inst[30:20]),
+      .RA (inst[44:34])
   );
 
   always @(posedge clk) begin

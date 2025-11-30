@@ -9,6 +9,7 @@
 ./verilog/ofifo.v
 ./verilog/sfp.v
 ./verilog/sram.v
+./verilog/rw_sram.v
 ./verilog/fifo_depth64.v
 ./verilog/fifo_mux_16_1.v
 ./verilog/fifo_mux_8_1.v

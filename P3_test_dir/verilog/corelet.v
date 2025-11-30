@@ -55,23 +55,23 @@ module corelet (
   wire [col*psum_bw-1:0] sfp_output;
   wire [col-1:0] mac_array_valid_o;
   wire [col-1:0] sfp_valid_o;
-  reg [3*col-1:0] shift_mac_array_valid_o_q;
+  // reg [3*col-1:0] shift_mac_array_valid_o_q;
 
   // instruction decode values
   wire acc_q;
-  wire CEN_pmem_q;
-  wire WEN_pmem_q;
-  wire A_pmem_q;
-  wire CEN_xmem_q;
-  wire WEN_xmem_q;
-  wire A_xmem_q;
-  wire ofifo_rd_q;
-  wire ififo_wr_q;
-  wire ififo_rd_q;
-  wire l0_rd_q;
-  wire l0_wr_q;
-  wire execute_q;
-  wire load_q;
+  wire CEN_pmem;
+  wire WEN_pmem;
+  wire [10:0] A_pmem;
+  wire CEN_xmem;
+  wire WEN_xmem;
+  wire [10:0] A_xmem;
+  wire ofifo_rd;
+  wire ififo_wr;
+  wire ififo_rd;
+  wire l0_rd;
+  wire l0_wr;
+  wire execute;
+  wire load;
 
   assign sfp_out = sfp_output;
 
@@ -79,19 +79,19 @@ module corelet (
 
   // decode logic (just a simple mapping)
   assign acc_q = inst[33];
-  assign CEN_pmem_q = inst[32];
-  assign WEN_pmem_q = inst[31];
-  assign A_pmem_q = inst[30:20];
-  assign CEN_xmem_q = inst[19];
-  assign WEN_xmem_q = inst[18];
-  assign A_xmem_q = inst[17:7];
-  assign ofifo_rd_q = inst[6];
-  assign ififo_wr_q = inst[5];
-  assign ififo_rd_q = inst[4];
-  assign l0_rd_q = inst[3];
-  assign l0_wr_q = inst[2];
-  assign execute_q = inst[1];
-  assign load_q = inst[0];
+  assign CEN_pmem = inst[32];
+  assign WEN_pmem = inst[31];
+  assign A_pmem = inst[30:20];
+  assign CEN_xmem = inst[19];
+  assign WEN_xmem = inst[18];
+  assign A_xmem = inst[17:7];
+  assign ofifo_rd = inst[6];
+  assign ififo_wr = inst[5];
+  assign ififo_rd = inst[4];
+  assign l0_rd = inst[3];
+  assign l0_wr = inst[2];
+  assign execute = inst[1];
+  assign load = inst[0];
 
   // in order to set accumulators to 0, must reset
   assign mac_north_input = ififo_output;
@@ -109,10 +109,10 @@ module corelet (
       .in_n(mac_north_input),
 
       .inst_w({
-        load_q & execution_mode,
-        execute_q & execution_mode,
-        execute_q & ~execution_mode,
-        load_q & ~execution_mode
+        load & execution_mode,
+        execute & execution_mode,
+        execute & ~execution_mode,
+        load & ~execution_mode
       }),  // instruction for MAC (kernel loading / execute)
       .valid(mac_array_valid_o)  // output valid for each column
   );
@@ -128,8 +128,8 @@ module corelet (
       .in (l0_input),
       .out(l0_output),
 
-      .rd(l0_rd_q),  // L0 read enable
-      .wr(l0_wr_q),  // L0 write enable
+      .rd(l0_rd),  // L0 read enable
+      .wr(l0_wr),  // L0 write enable
 
       .o_full (l0_full),
       .o_ready(l0_ready)
@@ -146,11 +146,11 @@ module corelet (
       .in (ififo_input),
       .out(ififo_output),
 
-      .rd(ififo_rd_q),  // ififo read enable
-      .wr(ififo_wr_q),  // L0 write enable
+      .rd(ififo_rd),  // ififo read enable
+      .wr(ififo_wr),  // L0 write enable
 
-      .o_full (),  // unused?
-      .o_ready()  // unused?
+      .o_full (ififo_full),  // unused?
+      .o_ready(ififo_ready)  // unused?
   );
 
   // SFU: accumulate + relu
@@ -175,8 +175,8 @@ module corelet (
       .clk    (clk),
       .in     (mac_output),                                // SFU output
       .out    (ofifo_output),
-      .rd     (ofifo_rd_q),                                // read enable
-      .wr     (shift_mac_array_valid_o_q[1*col-1:0*col]),
+      .rd     (ofifo_rd),                                // read enable
+      .wr     (mac_array_valid_o),
       .o_full (ofifo_full),
       .reset  (reset),
       .o_ready(ofifo_ready),
@@ -184,8 +184,8 @@ module corelet (
   );
 
   always @(posedge clk) begin
-    shift_mac_array_valid_o_q[col-1:0] <= mac_array_valid_o;
-    shift_mac_array_valid_o_q[2*col-1:col] <= shift_mac_array_valid_o_q[col-1:0];
-    shift_mac_array_valid_o_q[3*col-1:2*col] <= shift_mac_array_valid_o_q[2*col-1:col];
+    // shift_mac_array_valid_o_q[col-1:0] <= mac_array_valid_o;
+    // shift_mac_array_valid_o_q[2*col-1:col] <= shift_mac_array_valid_o_q[col-1:0];
+    // shift_mac_array_valid_o_q[3*col-1:2*col] <= shift_mac_array_valid_o_q[2*col-1:col];
   end
 endmodule
