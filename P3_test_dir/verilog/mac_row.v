@@ -66,7 +66,7 @@ module mac_row (
 
   generate
     for (j = 1; j < col + 1; j = j + 1) begin : valid_loop
-      // TODO: valid if this column has JUST performed a WS execute,
+      // valid if this column has JUST performed a WS execute,
       // (execute instruction is in inst_q of the PE to this column's right)
       // or IS ABOUT to perform an OS flush. (os_flush instruction is in
       // inst_q of this current column's PE).

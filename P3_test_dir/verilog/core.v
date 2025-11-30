@@ -14,19 +14,6 @@ module core (
     pmem_mode
 );
 
-  // TODO:
-  // 
-  // permit assignment from D_pmem to address in psum
-  //
-  // update corelet instruction width to be 35:0
-  //
-  // update pmem mode to be 2:0
-  //
-  // use ififo_mode to mux IFIFO input data between xmem and pmem
-  // Also expand wmem elements to be p_mem width
-  //
-  // add psum load to mac_tile.v
-
   parameter bw = 4;
   parameter psum_bw = 16;
   parameter col = 8;

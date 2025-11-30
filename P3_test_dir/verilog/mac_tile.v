@@ -116,9 +116,6 @@ module mac_tile (
     if (reset) begin
       inst_q <= 4'b0000;
       kern_ld_ready <= 1'b1;
-      // TODO: see if it's feasible to load 0s into accumulators during OS flush
-      // by reading in 0s from pmem into IFIFO beforehand
-      // c_q <= 0; // if OS, c_q must start at 0
     end else begin
       inst_q <= inst_w;
       if (ws_kernld) kern_ld_ready <= 0;
