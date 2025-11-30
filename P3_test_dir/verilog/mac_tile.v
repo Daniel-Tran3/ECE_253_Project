@@ -81,14 +81,16 @@ module mac_tile (
   always @(*) begin : comb_logic
 
     // decide what to send southbound
-    out_s = {{psum_bw-bw{1'b0}}, b_q};  // emit weight by default, for OS exec
-    if (ws_kernld) out_s = {{psum_bw-bw{1'b0}}, a_q};  // if loading kernel in WS, send a_q.
+    out_s = c_q;  // emit c_q when writing for OS. This also MUST be the default
+    // for quirky implementation reasons (this enables a hack that allows c_q
+    // to be reset to 0s without a reset signal, useful for output stationary execution)
+    if (os_exec) out_s = {{psum_bw - bw{1'b0}}, b_q};  // emit weight by default, for OS exec
+    else if (ws_kernld) out_s = {{psum_bw - bw{1'b0}}, a_q};  // if loading kernel in WS, send a_q.
     else if (ws_exec) out_s = mac_out;  // emit mac output when executing for WS
-    else if (os_flush) out_s = c_q;  // emit c_q when writing for OS
 
     // control the c (accumulator) register
     c_wr = ws_exec | os_exec | os_flush;
-    c_d  = os_exec ? mac_out : in_n;
+    c_d  = os_exec ? (kern_ld_ready ? 0 : mac_out) : in_n;
 
     // control the b (weight) register
     b_wr = (ws_kernld && kern_ld_ready) | os_exec;
@@ -116,9 +118,10 @@ module mac_tile (
     if (reset) begin
       inst_q <= 4'b0000;
       kern_ld_ready <= 1'b1;
+      // c_q load 0s from IFIFO via flush.
     end else begin
       inst_q <= inst_w;
-      if (ws_kernld) kern_ld_ready <= 0;
+      if (ws_kernld | os_exec) kern_ld_ready <= 0;
       if (a_wr) a_q <= a_d;
       if (b_wr) b_q <= in_n[bw-1:0];
       if (c_wr) c_q <= c_d;  // see comb_logic

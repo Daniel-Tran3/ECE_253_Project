@@ -91,7 +91,11 @@ module core (
   ) activation_sram (
       .CLK(clk),
       .WEN(inst[18] | xw_mode),
-      .CEN(inst[19] | xw_mode),
+      // In part 3, removed CEN xw_mode gate because we need to read from both
+      // activation and weight srams at the same time (at least, if we want
+      // pipelined execution).
+      // TODO: add separate clock enables for read and write enable
+      .CEN(inst[19]),
       .D  (D_xmem),
       .A  (inst[17:7]),
       .Q  (act_sram_output)
@@ -104,7 +108,11 @@ module core (
   ) weight_sram (
       .CLK(clk),
       .WEN(inst[18] | !xw_mode),
-      .CEN(inst[19] | !xw_mode),
+      // In part 3, removed CEN xw_mode gate because we need to read from both
+      // activation and weight srams at the same time (at least, if we want
+      // pipelined execution).
+      // TODO: add separate clock enables for read and write enable
+      .CEN(inst[19]),
       .D  (D_xmem),
       .A  (inst[17:7]),
       .Q  (w_sram_output)
