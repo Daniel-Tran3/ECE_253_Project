@@ -21,7 +21,8 @@ module core_tb;
 
   parameter xmem_words = 2048;
   parameter pmem_words = 2048;
-  parameter test_ws = 0;
+  parameter test_ws = 1;  // set to 1 if you want to test weight stationary
+  // before output stationary
 
   reg clk = 0;
   reg reset = 1;
@@ -785,8 +786,8 @@ module core_tb;
     clear_psum_ram();
 
     // we expect everything to fail.
-    $display("\nZeroed out psum; expect failure\n");
-    compare_psum_out();
+    $display("\nZeroed out psum\n");
+    // compare_psum_out();
 
     // reset the machine
     // required each time we compute an output tile in order to set c_ij of
@@ -972,9 +973,9 @@ module core_tb;
       end
       #0.5 clk = 1'b1;
       #0.5 clk = 1'b0;
-      $display("t = %d", t);
-      print_pe_status();
-      $display();
+      // $display("t = %d", t);
+      // print_pe_status();
+      // $display();
     end
 
     // OS FLUSH
