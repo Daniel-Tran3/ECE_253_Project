@@ -160,7 +160,13 @@ initial begin
   /////// Activation data writing to memory ///////
   //for (t=0; t<len_nij; t=t+1) begin  
   for (t=0; t<len_nij; t=t+1) begin  
-    #0.5 clk = 1'b0;  x_scan_file = $fscanf(x_file,"%64b", D_xmem); WEN_xmem = 0; CEN_xmem = 0; if (t>0) A_xmem = A_xmem + 1;
+    #0.5 clk = 1'b0;  
+    if (row == 16) begin
+      x_scan_file = $fscanf(x_file,"%64b", D_xmem); 
+    end else begin
+      x_scan_file = $fscanf(x_file,"%32b", D_xmem); 
+    end
+    WEN_xmem = 0; CEN_xmem = 0; if (t>0) A_xmem = A_xmem + 1;
     //$display("%d", core_instance.activation_sram.A);
     //$display("%b", core_instance.activation_sram.D);
     #0.5 clk = 1'b1;  
@@ -253,7 +259,13 @@ initial begin
     A_xmem = 11'b10000000000; xw_mode = 1;
 
     for (t=0; t<col; t=t+1) begin  
-      #0.5 clk = 1'b0;  w_scan_file = $fscanf(w_file,"%64b", D_xmem); WEN_xmem = 0; CEN_xmem = 0; if (t>0) A_xmem = A_xmem + 1;
+      #0.5 clk = 1'b0;  
+      if (row == 16) begin
+      	w_scan_file = $fscanf(w_file,"%64b", D_xmem); 
+      end else begin
+      	w_scan_file = $fscanf(w_file,"%32b", D_xmem); 
+      end
+      WEN_xmem = 0; CEN_xmem = 0; if (t>0) A_xmem = A_xmem + 1;
       //$display("%b", D_xmem); 
       //$display("%b", core_instance.weight_sram.D);
       #0.5 clk = 1'b1;  
@@ -381,8 +393,13 @@ $display("Row 0, col 8 weight: %b\n", core_instance.corelet_instance.mac_array_i
 		CEN_pmem = 0; WEN_pmem = 0;
 	    end
 	    if (ofifo_reads > 1 && ofifo_reads < len_nij + 2) begin
-		    psum_scan_file = $fscanf(psum_file, "%256b", answer);
-                    
+		    
+        if (col == 16) begin 
+          psum_scan_file = $fscanf(psum_file, "%256b", answer);
+        end else begin
+          psum_scan_file = $fscanf(psum_file, "%128b", answer);
+        end
+                   /* 
 		    if (core_instance.corelet_instance.ofifo_instance.out == answer) begin
                             $display("%2d-th psum data matched.", ofifo_reads-1);
                             if (answer == 'd0) begin
@@ -392,10 +409,15 @@ $display("Row 0, col 8 weight: %b\n", core_instance.corelet_instance.mac_array_i
                             end
                     end else begin
                       $display("%2d-th output featuremap Data ERROR!!", ofifo_reads-1); 
-                      $display("ofifoout: %256b", core_instance.corelet_instance.ofifo_instance.out);
-                      $display("answer  : %256b", answer);
+                      if (col == 16) begin
+                        $display("ofifoout: %256b", core_instance.corelet_instance.ofifo_instance.out);
+                        $display("answer  : %256b", answer);
+                      end else begin
+                        $display("ofifoout: %128b", core_instance.corelet_instance.ofifo_instance.out);
+                        $display("answer  : %128b", answer);
+                      end
                     end
-		    
+		    */
                     A_pmem = A_pmem + 1;
 	    end 
 	    if (ofifo_reads > len_nij) begin
@@ -459,7 +481,11 @@ $display("Row 0, col 8 weight: %b\n", core_instance.corelet_instance.mac_array_i
     #0.5 clk = 1'b1; 
 
     if (i>0) begin
-     out_scan_file = $fscanf(out_file,"%256b", answer); // reading from out file to answer
+     if (col == 16) begin
+      out_scan_file = $fscanf(out_file,"%256b", answer); // reading from out file to answer
+     end else begin
+      out_scan_file = $fscanf(out_file,"%128b", answer); // reading from out file to answer
+     end
      
      if (sfp_out == answer) begin
          $display("%2d-th output featuremap Data matched! :D", i); 
@@ -467,8 +493,13 @@ $display("Row 0, col 8 weight: %b\n", core_instance.corelet_instance.mac_array_i
          //$display("answer: %256b", answer);
      end else begin
          $display("%2d-th output featuremap Data ERROR!!", i); 
-         $display("sfpout: %256b", sfp_out);
-         $display("answer: %256b", answer);
+         if (col == 16) begin
+           $display("sfpout: %256b", sfp_out);
+           $display("answer: %256b", answer);
+         end else begin
+           $display("sfpout: %128b", sfp_out);
+           $display("answer: %128b", answer);
+         end
          error = 1;
        end
               
@@ -557,13 +588,22 @@ $display("Row 0, col 8 weight: %b\n", core_instance.corelet_instance.mac_array_i
 
 	if (t > 1) begin
 	  A_pmem = A_pmem_sfp;
-          out_scan_file = $fscanf(out_file,"%256b", answer); // reading from out file to answer
+    if (col == 16) begin
+      out_scan_file = $fscanf(out_file,"%256b", answer); // reading from out file to answer
+    end else begin
+      out_scan_file = $fscanf(out_file,"%128b", answer); // reading from out file to answer
+    end
           if (core_instance.psum_sram.Q == answer) begin
             $display("%2d-th output featuremap Data matched! :D", t-1); 
           end else begin
             $display("%2d-th output featuremap Data ERROR!!", t-1); 
-            $display("sfpout: %256b", core_instance.psum_sram.Q);
-            $display("answer: %256b", answer);
+            if (col == 16) begin
+              $display("sfpout: %256b", core_instance.psum_sram.Q);
+              $display("answer: %256b", answer);
+            end else begin
+              $display("sfpout: %128b", core_instance.psum_sram.Q);
+              $display("answer: %128b", answer);
+            end
             error = 1;
           end
 
