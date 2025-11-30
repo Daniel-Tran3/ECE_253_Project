@@ -88,7 +88,6 @@ module core_tb;
 
   reg [8*30:1] stringvar;
   reg [8*30:1] w_file_name;
-  reg [8*30:1] psum_file_name;
   reg execute_warmup = 1;
   wire ofifo_valid;
   wire [col*psum_bw-1:0] sfp_out;
@@ -281,8 +280,6 @@ module core_tb;
     /////////////////////////
 
     /////// Activation data writing to memory ///////
-    //for (t=0; t<len_nij; t=t+1) begin
-
     for (t = 0; t < len_nij; t = t + 1) begin
       #0.5 clk = 1'b0;
       // xw_mode=0 is the default, but we want to be explicit that we are
@@ -292,8 +289,6 @@ module core_tb;
       WEN_xmem = 0;
       CEN_xmem = 0;
       if (t > 0) A_xmem = A_xmem + 1;
-      //$display("%d", core_instance.activation_sram.A);
-      //$display("%b", core_instance.activation_sram.D);
       #0.5 clk = 1'b1;
 
       // fill in the expected value in xmem_sim
@@ -307,8 +302,6 @@ module core_tb;
     A_xmem   = 0;
 
     // verify activations are written to SRAM
-    //$display("%d", core_instance.activation_sram.A);
-    //$display("%b", core_instance.activation_sram.D);
     for (t = 0; t < len_nij; t = t + 1) begin
       if (amem_sim[t] != core_instance.activation_sram.memory[t]) begin
         $display("Unexpected value in activation SRAM!\n At address %d, expected %h but got %h", t,
@@ -357,6 +350,7 @@ module core_tb;
     end
 
     // PARTIAL SUMS OVER INPUT CHANNELS AND KIJ ---------------------------------------
+    // TODO: wrap in for loop to operate on multiple output tiles
     for (kij = 0; kij < 9; kij = kij + 1) begin  // kij loop
       $display("Kij %d\n", kij);
       case (kij)
@@ -370,18 +364,6 @@ module core_tb;
         7: w_file_name = "weight_7.txt";
         8: w_file_name = "weight_8.txt";
       endcase
-      case (kij)
-        0: psum_file_name = "psum_0.txt";
-        1: psum_file_name = "psum_1.txt";
-        2: psum_file_name = "psum_2.txt";
-        3: psum_file_name = "psum_3.txt";
-        4: psum_file_name = "psum_4.txt";
-        5: psum_file_name = "psum_5.txt";
-        6: psum_file_name = "psum_6.txt";
-        7: psum_file_name = "psum_7.txt";
-        8: psum_file_name = "psum_8.txt";
-      endcase
-
       // NOTE: instead of writing all kijs before summing them (sequential
       // style), continuously perform the summation on the same psum elements.
       // A_pmem[9:6] = kij;
@@ -557,10 +539,6 @@ module core_tb;
       /////////////////////////////////////
 
       /////////// Execution pipeline ////////////
-      // TODO: combine the following into a single pipelined loop:
-      // - OFIFO read/psum mem write/accumulation,
-      // NOTE: may want to flush IFIFO, L0, and OFIFO by reading them out for
-      // a couple cycles, or until they are empty.
       RA_pmem = 0;
       WA_pmem = -1;
       A_xmem = 0;  // used, but determined by i and j, not this base value.
@@ -768,8 +746,6 @@ module core_tb;
       #0.5 clk = 1'b0;
       #0.5 clk = 1'b1;
     end
-
-    // 
 
     #10 $finish;
 
