@@ -114,9 +114,10 @@ module core_tb;
   integer out_file, out_scan_file;  // file_handler
   integer psum_file, psum_scan_file;  // file_handler
   integer captured_data;
-  integer t, i, j, k, kij;
+  integer t, i, j, k, kij, in_tile;
   reg [col-1:0] m = 0;
   integer error;
+  integer tile_dir;
 
   assign inst_q[44:34] = RA_pmem_q;
   assign inst_q[33] = acc_q;
@@ -370,357 +371,366 @@ module core_tb;
     $dumpvars(0, core_tb);
 
     if (test_ws) begin
-      //x_file = $fopen("activation_tile0.txt", "r");
-      x_file = $fopen("activation.txt", "r");
-      // Following three lines are to remove the first three comment lines of the file
-      x_scan_file = $fscanf(x_file, "%s", captured_data);
-      x_scan_file = $fscanf(x_file, "%s", captured_data);
-      x_scan_file = $fscanf(x_file, "%s", captured_data);
-
       //////// Reset /////////
       reset_core();
       /////////////////////////
 
-      /////// Activation data writing to memory ///////
-      for (t = 0; t < len_nij; t = t + 1) begin
-        #0.5 clk = 1'b0;
-        // xw_mode=0 is the default, but we want to be explicit that we are
-        // writing to activations
-        xw_mode = 0;
-        x_scan_file = $fscanf(x_file, "%32b", D_xmem);
-        WEN_xmem = 0;
-        CEN_xmem = 0;
-        if (t > 0) A_xmem = A_xmem + 1;
-        #0.5 clk = 1'b1;
-
-        // fill in the expected value in xmem_sim
-        amem_sim[A_xmem] = D_xmem;
-      end
-
-      #0.5 clk = 1'b0;
-      WEN_xmem = 1;
-      CEN_xmem = 1;
-      A_xmem   = 0;
-
-      // verify activations are written to SRAM
-      for (t = 0; t < len_nij; t = t + 1) begin
-        if (amem_sim[t] != core_instance.activation_sram.memory[t]) begin
-          $display("Unexpected value in activation SRAM!\n At address %d, expected %h but got %h",
-                   t, amem_sim[t], core_instance.activation_sram.memory[t]);
-          $finish;
-        end
-      end
-
-      #0.5 clk = 1'b1;
-
-      $fclose(x_file);
-      /////////////////////////////////////////////////
-
       // ZERO OUT PSUMS IN MEMORY ----------------------------------------------
       clear_psum_ram();
 
-      // PARTIAL SUMS OVER INPUT CHANNELS AND KIJ ---------------------------------------
-      // TODO: wrap in for loop to operate on multiple output tiles
-      for (kij = 0; kij < 9; kij = kij + 1) begin  // kij loop
-        $display("Kij %d\n", kij);
-        case (kij)
-          0: w_file_name = "weight_0.txt";
-          1: w_file_name = "weight_1.txt";
-          2: w_file_name = "weight_2.txt";
-          3: w_file_name = "weight_3.txt";
-          4: w_file_name = "weight_4.txt";
-          5: w_file_name = "weight_5.txt";
-          6: w_file_name = "weight_6.txt";
-          7: w_file_name = "weight_7.txt";
-          8: w_file_name = "weight_8.txt";
+      for (in_tile = 0; in_tile < 2; in_tile = in_tile + 2) begin
+        //x_file = $fopen("activation_tile0.txt", "r");
+
+        case (in_tile)
+          0: tile_dir = "Tile0";
+          1: tile_dir = "Tile1";
         endcase
-        // NOTE: instead of writing all kijs before summing them (sequential
-        // style), continuously perform the summation on the same psum elements.
-        // A_pmem[9:6] = kij;
-        // A_pmem[5:0] = 0;
-
-
-        w_file = $fopen(w_file_name, "r");
+        x_file = $fopen({tile_dir, "/activation.txt"}, "r");
         // Following three lines are to remove the first three comment lines of the file
-        w_scan_file = $fscanf(w_file, "%s", captured_data);
-        w_scan_file = $fscanf(w_file, "%s", captured_data);
-        w_scan_file = $fscanf(w_file, "%s", captured_data);
+        x_scan_file = $fscanf(x_file, "%s", captured_data);
+        x_scan_file = $fscanf(x_file, "%s", captured_data);
+        x_scan_file = $fscanf(x_file, "%s", captured_data);
 
-        #0.5 clk = 1'b0;
-        reset = 1;
-        #0.5 clk = 1'b1;
 
-        for (i = 0; i < 10; i = i + 1) begin
+        /////// Activation data writing to memory ///////
+        for (t = 0; t < len_nij; t = t + 1) begin
           #0.5 clk = 1'b0;
-          #0.5 clk = 1'b1;
-        end
-
-        #0.5 clk = 1'b0;
-        reset = 0;
-        #0.5 clk = 1'b1;
-
-        #0.5 clk = 1'b0;
-        #0.5 clk = 1'b1;
-
-        /////// Kernel data writing to memory ///////
-
-        A_xmem  = 11'b00000000000;
-        xw_mode = 1;  // write to weight memory
-
-
-        for (t = 0; t < row; t = t + 1) begin
-          // weights file is expected to look like the following:
-          // #col7row0[msb-lsb],col6row0[msb-lst],....,col0row0[msb-lst]#
-          // #col7row1[msb-lsb],col6row1[msb-lst],....,col0row1[msb-lst]#
-          // #................#
-          w_scan_file = $fscanf(w_file, "%32b", D_xmem);
+          // xw_mode=0 is the default, but we want to be explicit that we are
+          // writing to activations
+          xw_mode = 0;
+          x_scan_file = $fscanf(x_file, "%32b", D_xmem);
           WEN_xmem = 0;
           CEN_xmem = 0;
-          if (t > 0) begin
-            A_xmem = A_xmem + 1;
-          end
-          // pump wire data into registered inputs
+          if (t > 0) A_xmem = A_xmem + 1;
           #0.5 clk = 1'b1;
-          #0.5 clk = 1'b0;
 
-          // update simulation values
-          wmem_sim[t] = D_xmem;
-          for (j = 0; j < col; j = j + 1) begin
-            // The first row output by the IFIFO is the bottom row of PE
-            // weights; the last row output by the IFIFO is the top row of
-            // PE weights.
-            pe_weights_sim[t][j] = D_xmem_fragments[j];
-          end
+          // fill in the expected value in xmem_sim
+          amem_sim[A_xmem] = D_xmem;
         end
 
-        // restore core input registers to default values
-        // simultaneously complete the last SRAM write
+        #0.5 clk = 1'b0;
         WEN_xmem = 1;
         CEN_xmem = 1;
         A_xmem   = 0;
-        #0.5 clk = 1'b1;
-        #0.5 clk = 1'b0;
 
-        // verify that kernel data has been written
-        // $display("Verifying that wmem has been written to correctly");
-        for (t = 0; t < row; t = t + 1) begin
-          // $display("%d %d", wmem_sim[t], core_instance.weight_sram.memory[t]);
-          if (wmem_sim[t] !== core_instance.weight_sram.memory[t]) begin
-            $display("Unexpected value in weight SRAM!\n At address %d, expected %d but got %d", t,
-                     wmem_sim[t], core_instance.weight_sram.memory[t]);
+        // verify activations are written to SRAM
+        for (t = 0; t < len_nij; t = t + 1) begin
+          if (amem_sim[t] != core_instance.activation_sram.memory[t]) begin
+            $display("Unexpected value in activation SRAM!\n At address %d, expected %h but got %h",
+                     t, amem_sim[t], core_instance.activation_sram.memory[t]);
             $finish;
           end
         end
-        /////////////////////////////////////
 
-
-        /////// Kernel data writing to IFIFO ///////
-        // a pipelined kernel write has a length of 2.
-        // weight sram read must start one cycle before ififo
-        // read starts, and must end a cycle before ififo read ends.
-        // set ctrl signals
-        A_xmem  = 11'b00000000000;
-        xw_mode = 1;  // read out from weight sram
-        // read from weight memory. Must do this one cycle before reading IFIFO
         #0.5 clk = 1'b1;
-        #0.5 clk = 1'b0;
 
-        ififo_mode = 0;  // IFIFO should copy values from weights
-        ififo_wr   = 1;
-        // add 1 to iterations for pipeline
-        for (t = 0; t < col + 1; t = t + 1) begin
-          if (1 <= t && t < col) A_xmem = A_xmem + 1;
+        $fclose(x_file);
+        /////////////////////////////////////////////////
 
-          // pipeline weight read
-          if (0 <= t && t < col) CEN_xmem = 0;
-          else CEN_xmem = 1;
+        // PARTIAL SUMS OVER INPUT CHANNELS AND KIJ ---------------------------------------
+        // TODO: wrap in for loop to operate on multiple output tiles
+        for (kij = 0; kij < 9; kij = kij + 1) begin  // kij loop
+          $display("Kij %d\n", kij);
+          case (kij)
+            0: w_file_name = {tile_dir, "weight_0.txt"};
+            1: w_file_name = {tile_dir, "weight_1.txt"};
+            2: w_file_name = {tile_dir, "weight_2.txt"};
+            3: w_file_name = {tile_dir, "weight_3.txt"};
+            4: w_file_name = {tile_dir, "weight_4.txt"};
+            5: w_file_name = {tile_dir, "weight_5.txt"};
+            6: w_file_name = {tile_dir, "weight_6.txt"};
+            7: w_file_name = {tile_dir, "weight_7.txt"};
+            8: w_file_name = {tile_dir, "weight_8.txt"};
+          endcase
+          // NOTE: instead of writing all kijs before summing them (sequential
+          // style), continuously perform the summation on the same psum elements.
+          // A_pmem[9:6] = kij;
+          // A_pmem[5:0] = 0;
 
-          // pipeline ififo read
-          if (1 <= t && t < col + 1) ififo_wr = 1;
-          else ififo_wr = 0;
 
+          w_file = $fopen(w_file_name, "r");
+          // Following three lines are to remove the first three comment lines of the file
+          w_scan_file = $fscanf(w_file, "%s", captured_data);
+          w_scan_file = $fscanf(w_file, "%s", captured_data);
+          w_scan_file = $fscanf(w_file, "%s", captured_data);
+
+          #0.5 clk = 1'b0;
+          reset = 1;
+          #0.5 clk = 1'b1;
+
+          for (i = 0; i < 10; i = i + 1) begin
+            #0.5 clk = 1'b0;
+            #0.5 clk = 1'b1;
+          end
+
+          #0.5 clk = 1'b0;
+          reset = 0;
+          #0.5 clk = 1'b1;
+
+          #0.5 clk = 1'b0;
+          #0.5 clk = 1'b1;
+
+          /////// Kernel data writing to memory ///////
+
+          A_xmem  = 11'b00000000000;
+          xw_mode = 1;  // write to weight memory
+
+
+          for (t = 0; t < row; t = t + 1) begin
+            // weights file is expected to look like the following:
+            // #col7row0[msb-lsb],col6row0[msb-lst],....,col0row0[msb-lst]#
+            // #col7row1[msb-lsb],col6row1[msb-lst],....,col0row1[msb-lst]#
+            // #................#
+            w_scan_file = $fscanf(w_file, "%32b", D_xmem);
+            WEN_xmem = 0;
+            CEN_xmem = 0;
+            if (t > 0) begin
+              A_xmem = A_xmem + 1;
+            end
+            // pump wire data into registered inputs
+            #0.5 clk = 1'b1;
+            #0.5 clk = 1'b0;
+
+            // update simulation values
+            wmem_sim[t] = D_xmem;
+            for (j = 0; j < col; j = j + 1) begin
+              // The first row output by the IFIFO is the bottom row of PE
+              // weights; the last row output by the IFIFO is the top row of
+              // PE weights.
+              pe_weights_sim[t][j] = D_xmem_fragments[j];
+            end
+          end
+
+          // restore core input registers to default values
+          // simultaneously complete the last SRAM write
+          WEN_xmem = 1;
+          CEN_xmem = 1;
+          A_xmem   = 0;
           #0.5 clk = 1'b1;
           #0.5 clk = 1'b0;
-          // if (t > 1) begin
-          // $display("%b", core_instance.weight_sram.Q);
-          // $display("IFIFO writing: %b", core_instance.corelet_instance.ififo.wr);
-          // $display("IFIFO input: %h", core_instance.corelet_instance.ififo.in);
-          // $display("");
-          // end
-        end
 
-        // restore defaults
-        ififo_wr = 0;
-        A_xmem   = 0;
-        CEN_xmem = 1;  // already done, this is more explicit.
-        xw_mode  = 0;
-        #0.5 clk = 1'b1;  //$display("%b", core_instance.weight_sram.Q);
-        #0.5 clk = 1'b0;
-
-        /////////////////////////////////////
-
-        /////// Kernel loading to PEs ///////
-        // completing kernel loading requires:
-        // 1 cycle buffer (across core.inst_w->mac_array.inst_w_temp)
-        // `row` cycles to populate all the rows with load instructions
-        // `row` cycles to flush out all instructions from instr queue
-        // `col` more cycles to complete load out in all columns
-        execute = 0;
-        acc = 0;
-        relu_en = 0;
-        execution_mode = 0;
-        for (t = 0; t < 2 * row + 2 * col; t = t + 1) begin
-          // issue enough load instructions to perform a load without bugs
-          if (0 <= t && t < 2 * col) load = 1;
-          else load = 0;
-
-          // provide data to load from
-          // ififo actually has the same delay as instructions
-          // due to rd_en being a register, meaning rd->rd_en[0] costs a cycle
-          if (1 <= t && t < row + 1) ififo_rd = 1;
-          else ififo_rd = 0;
-
-          #0.5 clk = 1'b1;
-          #0.5 clk = 1'b0;
-
-          // $display("ififo read: %b", ififo_rd_q);
-          // $display("ififo out: %b", core_instance.corelet_instance.ififo_output);
-          // print_pe_status();
-          //
-          // j = 0;
-        end
-        ififo_rd = 0;
-        load = 0;
-        #0.5 clk = 1'b1;
-        #0.5 clk = 1'b0;
-        // print_pe_status();
-
-        // verify that weights loaded into the kernel are as expected
-        for (t = 0; t < row; t = t + 1) begin
-          for (j = 0; j < col; j = j + 1) begin
-            if (pe_weights_sim[t][j] !== pe_bq_probe[t][j]) begin
-              $display(
-                  "Unexpected value in PE weight!\n At PE(%d,%d), expected b_q to be %d but got %d",
-                  t, j, pe_weights_sim[t][j], pe_bq_probe[t][j]);
+          // verify that kernel data has been written
+          // $display("Verifying that wmem has been written to correctly");
+          for (t = 0; t < row; t = t + 1) begin
+            // $display("%d %d", wmem_sim[t], core_instance.weight_sram.memory[t]);
+            if (wmem_sim[t] !== core_instance.weight_sram.memory[t]) begin
+              $display("Unexpected value in weight SRAM!\n At address %d, expected %d but got %d",
+                       t, wmem_sim[t], core_instance.weight_sram.memory[t]);
               $finish;
             end
           end
-        end
-        /////////////////////////////////////
-
-        /////////// Execution pipeline ////////////
-        RA_pmem = 0;
-        WA_pmem = -1;
-        A_xmem = 0;  // used, but determined by i and j, not this base value.
-        // useful counters to figure out A_xmem
-        i = 0;  // rows
-        j = 0;  // cols
-        pmem_mode = 0;  // update using OFIFO
-        xw_mode = 0;  // read in activations
-        // it's easier to just enable pmem and xmem for this period of time.
-        CEN_pmem = 0;
-        CEN_xmem = 0;
-        // but keep them in read mode until we really have to write
-        WEN_xmem = 1;
-        WEN_pmem = 1;
-        ififo_mode = 1;  // load psums into IFIFO
-
-        // iterate at least until first vector comes out, then until ofifo stops
-        // spitting out nij values for the output tile
-        execute_warmup = 1;
-        for (t = 0; execute_warmup || ofifo_valid; t = t + 1) begin
-          // t=0: issue read requests to psum and activation SRAMs.
-          // ensure that the addresses of activations correspond to the
-          // nij' indices availble to this kij for convolution.
-          // Issue execute instruction to core. It will be in
-          // mac_array.inst_w_temp in t=1, and should reach
-          // mac_tile.inst_q in t=2.
-          if (0 <= t && t < len_onij + 1) begin
-            // we must issue one extra execute instruction to ensure that the
-            // tail end of the execute chain gets its MAC value read out.
-            execute = 1;
-          end else begin
-            execute = 0;
-          end
+          /////////////////////////////////////
 
 
-          if (1 <= t && t < len_onij) begin
-            RA_pmem = RA_pmem + 1;
-
-            j = j + 1;
-            if (j == o_ni_dim) begin
-              j = 0;
-              i = i + 1;
-            end
-          end
-          A_xmem = a_pad_ni_dim * (i + kij / ki_dim) + j + kij % ki_dim;
-
-          // t=1-t=16: issue write requests to IFIFO and L0 for each nij. Simultaneously
-          // issue a read request!!! because the write signal doesn't have
-          // a register between itself and the low-level FIFOs
-          if (1 <= t && t < len_onij + 1) begin
-            ififo_wr = 1;
-            ififo_rd = 1;
-            l0_wr = 1;
-            l0_rd = 1;
-          end else begin
-            ififo_wr = 0;
-            ififo_rd = 0;
-            l0_wr = 0;
-            l0_rd = 0;
-          end
-
-          // t=2: data is available for PE(0,0), and must be consumed else it
-          // will be popped unused in t=3. Fortunately, we issued the execute
-          // instruction in t=0, which should be in PE(0,0)'s inst_q by t=2.
-
-          // whenever the output FIFO is ready, issue a read signal to it
-          // Wait one cycle for the signal to reach ofifo.rd_en
-          // then issue a write signal to the psum FIFO at an address incrementing from 0.
-          if (ofifo_valid) begin
-            ofifo_rd = 1;
-
-            // the first time ofifo becomes valid, don't increment WA_pmem
-            if (!execute_warmup) begin
-              WEN_pmem = 0;
-              WA_pmem  = WA_pmem + 1;
-            end
-          end
-
-          // Once OFIFO becomes valid for the first time, we can wait until
-          // OFIFO becomes invalid to know when we're done.
-          if (execute_warmup && ofifo_valid) execute_warmup = 0;
-
-          // the cycle ofifo_valid goes low, ofifo_rd_q will still be high from the
-          // previous cycle. This is ok because ofifo simply will not update.
-          // However, WEN_pmem will be high for an extra cycle. Fortunately
-          // WA_pmem will increment and not mangle any old work. So, this should
-          // be fine, although a bit uncomfortable... WA_pmem cannot be allowed
-          // to wrap around.
-
+          /////// Kernel data writing to IFIFO ///////
+          // a pipelined kernel write has a length of 2.
+          // weight sram read must start one cycle before ififo
+          // read starts, and must end a cycle before ififo read ends.
+          // set ctrl signals
+          A_xmem  = 11'b00000000000;
+          xw_mode = 1;  // read out from weight sram
+          // read from weight memory. Must do this one cycle before reading IFIFO
           #0.5 clk = 1'b1;
           #0.5 clk = 1'b0;
 
-          // verify some things
+          ififo_mode = 0;  // IFIFO should copy values from weights
+          ififo_wr   = 1;
+          // add 1 to iterations for pipeline
+          for (t = 0; t < col + 1; t = t + 1) begin
+            if (1 <= t && t < col) A_xmem = A_xmem + 1;
+
+            // pipeline weight read
+            if (0 <= t && t < col) CEN_xmem = 0;
+            else CEN_xmem = 1;
+
+            // pipeline ififo read
+            if (1 <= t && t < col + 1) ififo_wr = 1;
+            else ififo_wr = 0;
+
+            #0.5 clk = 1'b1;
+            #0.5 clk = 1'b0;
+            // if (t > 1) begin
+            // $display("%b", core_instance.weight_sram.Q);
+            // $display("IFIFO writing: %b", core_instance.corelet_instance.ififo.wr);
+            // $display("IFIFO input: %h", core_instance.corelet_instance.ififo.in);
+            // $display("");
+            // end
+          end
+
+          // restore defaults
+          ififo_wr = 0;
+          A_xmem   = 0;
+          CEN_xmem = 1;  // already done, this is more explicit.
+          xw_mode  = 0;
+          #0.5 clk = 1'b1;  //$display("%b", core_instance.weight_sram.Q);
+          #0.5 clk = 1'b0;
+
+          /////////////////////////////////////
+
+          /////// Kernel loading to PEs ///////
+          // completing kernel loading requires:
+          // 1 cycle buffer (across core.inst_w->mac_array.inst_w_temp)
+          // `row` cycles to populate all the rows with load instructions
+          // `row` cycles to flush out all instructions from instr queue
+          // `col` more cycles to complete load out in all columns
+          execute = 0;
+          acc = 0;
+          relu_en = 0;
+          execution_mode = 0;
+          for (t = 0; t < 2 * row + 2 * col; t = t + 1) begin
+            // issue enough load instructions to perform a load without bugs
+            if (0 <= t && t < 2 * col) load = 1;
+            else load = 0;
+
+            // provide data to load from
+            // ififo actually has the same delay as instructions
+            // due to rd_en being a register, meaning rd->rd_en[0] costs a cycle
+            if (1 <= t && t < row + 1) ififo_rd = 1;
+            else ififo_rd = 0;
+
+            #0.5 clk = 1'b1;
+            #0.5 clk = 1'b0;
+
+            // $display("ififo read: %b", ififo_rd_q);
+            // $display("ififo out: %b", core_instance.corelet_instance.ififo_output);
+            // print_pe_status();
+            //
+            // j = 0;
+          end
+          ififo_rd = 0;
+          load = 0;
+          #0.5 clk = 1'b1;
+          #0.5 clk = 1'b0;
           // print_pe_status();
-          // print valid bits coming out of the last column
+
+          // verify that weights loaded into the kernel are as expected
+          for (t = 0; t < row; t = t + 1) begin
+            for (j = 0; j < col; j = j + 1) begin
+              if (pe_weights_sim[t][j] !== pe_bq_probe[t][j]) begin
+                $display(
+                    "Unexpected value in PE weight!\n At PE(%d,%d), expected b_q to be %d but got %d",
+                    t, j, pe_weights_sim[t][j], pe_bq_probe[t][j]);
+                $finish;
+              end
+            end
+          end
+          /////////////////////////////////////
+
+          /////////// Execution pipeline ////////////
+          RA_pmem = 0;
+          WA_pmem = -1;
+          A_xmem = 0;  // used, but determined by i and j, not this base value.
+          // useful counters to figure out A_xmem
+          i = 0;  // rows
+          j = 0;  // cols
+          pmem_mode = 0;  // update using OFIFO
+          xw_mode = 0;  // read in activations
+          // it's easier to just enable pmem and xmem for this period of time.
+          CEN_pmem = 0;
+          CEN_xmem = 0;
+          // but keep them in read mode until we really have to write
+          WEN_xmem = 1;
+          WEN_pmem = 1;
+          ififo_mode = 1;  // load psums into IFIFO
+
+          // iterate at least until first vector comes out, then until ofifo stops
+          // spitting out nij values for the output tile
+          execute_warmup = 1;
+          for (t = 0; execute_warmup || ofifo_valid; t = t + 1) begin
+            // t=0: issue read requests to psum and activation SRAMs.
+            // ensure that the addresses of activations correspond to the
+            // nij' indices availble to this kij for convolution.
+            // Issue execute instruction to core. It will be in
+            // mac_array.inst_w_temp in t=1, and should reach
+            // mac_tile.inst_q in t=2.
+            if (0 <= t && t < len_onij + 1) begin
+              // we must issue one extra execute instruction to ensure that the
+              // tail end of the execute chain gets its MAC value read out.
+              execute = 1;
+            end else begin
+              execute = 0;
+            end
+
+
+            if (1 <= t && t < len_onij) begin
+              RA_pmem = RA_pmem + 1;
+
+              j = j + 1;
+              if (j == o_ni_dim) begin
+                j = 0;
+                i = i + 1;
+              end
+            end
+            A_xmem = a_pad_ni_dim * (i + kij / ki_dim) + j + kij % ki_dim;
+
+            // t=1-t=16: issue write requests to IFIFO and L0 for each nij. Simultaneously
+            // issue a read request!!! because the write signal doesn't have
+            // a register between itself and the low-level FIFOs
+            if (1 <= t && t < len_onij + 1) begin
+              ififo_wr = 1;
+              ififo_rd = 1;
+              l0_wr = 1;
+              l0_rd = 1;
+            end else begin
+              ififo_wr = 0;
+              ififo_rd = 0;
+              l0_wr = 0;
+              l0_rd = 0;
+            end
+
+            // t=2: data is available for PE(0,0), and must be consumed else it
+            // will be popped unused in t=3. Fortunately, we issued the execute
+            // instruction in t=0, which should be in PE(0,0)'s inst_q by t=2.
+
+            // whenever the output FIFO is ready, issue a read signal to it
+            // Wait one cycle for the signal to reach ofifo.rd_en
+            // then issue a write signal to the psum FIFO at an address incrementing from 0.
+            if (ofifo_valid) begin
+              ofifo_rd = 1;
+
+              // the first time ofifo becomes valid, don't increment WA_pmem
+              if (!execute_warmup) begin
+                WEN_pmem = 0;
+                WA_pmem  = WA_pmem + 1;
+              end
+            end
+
+            // Once OFIFO becomes valid for the first time, we can wait until
+            // OFIFO becomes invalid to know when we're done.
+            if (execute_warmup && ofifo_valid) execute_warmup = 0;
+
+            // the cycle ofifo_valid goes low, ofifo_rd_q will still be high from the
+            // previous cycle. This is ok because ofifo simply will not update.
+            // However, WEN_pmem will be high for an extra cycle. Fortunately
+            // WA_pmem will increment and not mangle any old work. So, this should
+            // be fine, although a bit uncomfortable... WA_pmem cannot be allowed
+            // to wrap around.
+
+            #0.5 clk = 1'b1;
+            #0.5 clk = 1'b0;
+
+            // verify some things
+            // print_pe_status();
+            // print valid bits coming out of the last column
+          end
+
+          execute = 0;
+          CEN_pmem = 1;
+          CEN_xmem = 1;
+          execute = 0;
+          ofifo_rd = 0;
+          WEN_pmem = 1;
+          ififo_wr = 0;
+          ififo_rd = 0;
+          l0_wr = 0;
+          l0_rd = 0;
+          // $display("psum memory contents:");
+          // for (t = 0; t < len_onij; t = t + 1) begin
+          //   $display("%d: %32h", t, core_instance.psum_sram.memory[t]);
+          // end
+          // if (kij == 0) $finish;
         end
 
-        execute = 0;
-        CEN_pmem = 1;
-        CEN_xmem = 1;
-        execute = 0;
-        ofifo_rd = 0;
-        WEN_pmem = 1;
-        ififo_wr = 0;
-        ififo_rd = 0;
-        l0_wr = 0;
-        l0_rd = 0;
-        // $display("psum memory contents:");
-        // for (t = 0; t < len_onij; t = t + 1) begin
-        //   $display("%d: %32h", t, core_instance.psum_sram.memory[t]);
-        // end
-        // if (kij == 0) $finish;
       end
 
       ////////// SRAM verification /////////
@@ -786,7 +796,7 @@ module core_tb;
     clear_psum_ram();
 
     // we expect everything to fail.
-    $display("\nZeroed out psum\n");
+    $display("\nZeroed out psum; expect failure\n");
     // compare_psum_out();
 
     // reset the machine
