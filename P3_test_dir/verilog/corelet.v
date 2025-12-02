@@ -58,7 +58,7 @@ module corelet (
   // reg [3*col-1:0] shift_mac_array_valid_o_q;
 
   // instruction decode values
-  wire acc_q;
+  wire acc;
   wire CEN_pmem;
   wire WEN_pmem;
   wire [10:0] A_pmem;
@@ -78,7 +78,7 @@ module corelet (
   // changes for part 3:
 
   // decode logic (just a simple mapping)
-  assign acc_q = inst[33];
+  assign acc = inst[33];
   assign CEN_pmem = inst[32];
   assign WEN_pmem = inst[31];
   assign A_pmem = inst[30:20];
@@ -161,7 +161,7 @@ module corelet (
       .clk      (clk),
       .reset    (sfp_reset),
       .in_psum  (sfp_input),        // MAC outputs connected to SFU input
-      .valid_in ({col{inst[33]}}),  // MAC output valid
+      .valid_in ({col{acc}}),  // MAC output valid
       .out_accum(sfp_output),       // SFP output (accum + relu) connected to OFIFO input
       .wr_ofifo (ofifo_wr),         // write enable for OFIFO
       .o_valid  (sfp_valid),

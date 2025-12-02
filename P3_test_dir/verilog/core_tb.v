@@ -245,7 +245,7 @@ module core_tb;
   // useful tasks
   task automatic compare_psum_out;
     begin
-      out_file = $fopen("out.txt", "r");
+      out_file = $fopen("P16x8_Files/out_no_relu.txt", "r");
 
       // Following three lines are to remove the first three comment lines of the file
       out_scan_file = $fscanf(out_file, "%s", answer);
@@ -378,17 +378,44 @@ module core_tb;
       // ZERO OUT PSUMS IN MEMORY ----------------------------------------------
       clear_psum_ram();
 
-      for (in_tile = 0; in_tile < 2; in_tile = in_tile + 2) begin
+      for (in_tile = 0; in_tile < 2; in_tile = in_tile + 1) begin
+        pmem_mode      = 0;
+        inst_w         = 0;
+
+        xw_mode        = 0;
+        D_xmem         = 0;
+        CEN_xmem       = 1;
+        WEN_xmem       = 1;
+        A_xmem         = 0;
+
+        CEN_pmem       = 1;
+        WEN_pmem       = 1;
+        D_pmem         = 0;
+        WA_pmem        = 0;
+        RA_pmem        = 0;
+
+        ofifo_rd       = 0;
+        ififo_wr       = 0;
+        ififo_rd       = 0;
+        ififo_mode     = 0;
+        l0_rd          = 0;
+        l0_wr          = 0;
+        execute        = 0;
+        load           = 0;
+        execution_mode = 0;
+        acc            = 0;
+        relu_en        = 0;
+        execution_mode = 0;
         //x_file = $fopen("activation_tile0.txt", "r");
 
         case (in_tile)
           0: begin
             // tile_dir = "P16x8_Files/Tile0";
-            x_file   = $fopen("P16x8_Files/Tile0/activation.txt", "r");
+            x_file = $fopen("P16x8_Files/Tile0/activation.txt", "r");
           end
           1: begin
             // tile_dir = "P16x8_Files/Tile1";
-            x_file   = $fopen("P16x8_Files/Tile1/activation.txt", "r");
+            x_file = $fopen("P16x8_Files/Tile1/activation.txt", "r");
           end
         endcase
         // Following three lines are to remove the first three comment lines of the file
@@ -398,6 +425,7 @@ module core_tb;
 
 
         /////// Activation data writing to memory ///////
+        A_xmem = 0;
         for (t = 0; t < len_nij; t = t + 1) begin
           #0.5 clk = 1'b0;
           // xw_mode=0 is the default, but we want to be explicit that we are
@@ -615,7 +643,7 @@ module core_tb;
 
             // $display("ififo read: %b", ififo_rd_q);
             // $display("ififo out: %b", core_instance.corelet_instance.ififo_output);
-            // print_pe_status();
+            print_pe_status();
             //
             // j = 0;
           end
@@ -734,6 +762,7 @@ module core_tb;
             // verify some things
             // print_pe_status();
             // print valid bits coming out of the last column
+            print_pe_status();
           end
 
           execute = 0;
@@ -747,12 +776,12 @@ module core_tb;
           l0_wr = 0;
           l0_rd = 0;
           // $display("psum memory contents:");
-          // for (t = 0; t < len_onij; t = t + 1) begin
-          //   $display("%d: %32h", t, core_instance.psum_sram.memory[t]);
-          // end
           // if (kij == 0) $finish;
+          $display("psum memory contents: for kij %d", kij);
+          for (t = 0; t < len_onij; t = t + 1) begin
+            $display("%d: %32h", t, core_instance.psum_sram.memory[t]);
+          end
         end
-
       end
 
       ////////// SRAM verification /////////
@@ -761,10 +790,10 @@ module core_tb;
       // row 1: nij=1, output channels 0-7
       // row 2: nij=2, output channels 0-7
       // ...
-      // $display("psum memory contents:");
-      // for (t = 0; t < len_onij; t = t + 1) begin
-      //   $display("%d: %32h", t, core_instance.psum_sram.memory[t]);
-      // end
+      $display("psum memory contents: after finishing");
+      for (t = 0; t < len_onij; t = t + 1) begin
+        $display("%d: %32h", t, core_instance.psum_sram.memory[t]);
+      end
       CEN_pmem = 0;
       WEN_pmem = 1;
       RA_pmem  = 0;
@@ -802,6 +831,16 @@ module core_tb;
       pmem_mode = 0;
       #0.5 clk = 1'b1;
 
+
+      // Pass psums thru SFP to perform ReLU
+      pmem_mode = 1;  // write from SFP back to psums
+      for (t = 0; t < 10; t = t + 1) begin
+        if (0 <= t && t < len_onij) begin
+          relu_en = 1;
+        end else begin
+          relu_en = 0;
+        end
+      end
 
       for (t = 0; t < 10; t = t + 1) begin
         #0.5 clk = 1'b0;
