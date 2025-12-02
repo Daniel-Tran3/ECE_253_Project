@@ -382,10 +382,15 @@ module core_tb;
         //x_file = $fopen("activation_tile0.txt", "r");
 
         case (in_tile)
-          0: tile_dir = "Tile0";
-          1: tile_dir = "Tile1";
+          0: begin
+            // tile_dir = "P16x8_Files/Tile0";
+            x_file   = $fopen("P16x8_Files/Tile0/activation.txt", "r");
+          end
+          1: begin
+            // tile_dir = "P16x8_Files/Tile1";
+            x_file   = $fopen("P16x8_Files/Tile1/activation.txt", "r");
+          end
         endcase
-        x_file = $fopen({tile_dir, "/activation.txt"}, "r");
         // Following three lines are to remove the first three comment lines of the file
         x_scan_file = $fscanf(x_file, "%s", captured_data);
         x_scan_file = $fscanf(x_file, "%s", captured_data);
@@ -431,24 +436,41 @@ module core_tb;
         // TODO: wrap in for loop to operate on multiple output tiles
         for (kij = 0; kij < 9; kij = kij + 1) begin  // kij loop
           $display("Kij %d\n", kij);
-          case (kij)
-            0: w_file_name = {tile_dir, "weight_0.txt"};
-            1: w_file_name = {tile_dir, "weight_1.txt"};
-            2: w_file_name = {tile_dir, "weight_2.txt"};
-            3: w_file_name = {tile_dir, "weight_3.txt"};
-            4: w_file_name = {tile_dir, "weight_4.txt"};
-            5: w_file_name = {tile_dir, "weight_5.txt"};
-            6: w_file_name = {tile_dir, "weight_6.txt"};
-            7: w_file_name = {tile_dir, "weight_7.txt"};
-            8: w_file_name = {tile_dir, "weight_8.txt"};
+          // $display("%s", w_file_name);
+          case (in_tile)
+            0:
+            case (kij)
+              0: w_file = $fopen(("P16x8_Files/Tile0/weight_0.txt"), "r");
+              1: w_file = $fopen(("P16x8_Files/Tile0/weight_1.txt"), "r");
+              2: w_file = $fopen(("P16x8_Files/Tile0/weight_2.txt"), "r");
+              3: w_file = $fopen(("P16x8_Files/Tile0/weight_3.txt"), "r");
+              4: w_file = $fopen(("P16x8_Files/Tile0/weight_4.txt"), "r");
+              5: w_file = $fopen(("P16x8_Files/Tile0/weight_5.txt"), "r");
+              6: w_file = $fopen(("P16x8_Files/Tile0/weight_6.txt"), "r");
+              7: w_file = $fopen(("P16x8_Files/Tile0/weight_7.txt"), "r");
+              8: w_file = $fopen(("P16x8_Files/Tile0/weight_8.txt"), "r");
+            endcase
+            1:
+            case (kij)
+              0: w_file = $fopen(("P16x8_Files/Tile1/weight_0.txt"), "r");
+              1: w_file = $fopen(("P16x8_Files/Tile1/weight_1.txt"), "r");
+              2: w_file = $fopen(("P16x8_Files/Tile1/weight_2.txt"), "r");
+              3: w_file = $fopen(("P16x8_Files/Tile1/weight_3.txt"), "r");
+              4: w_file = $fopen(("P16x8_Files/Tile1/weight_4.txt"), "r");
+              5: w_file = $fopen(("P16x8_Files/Tile1/weight_5.txt"), "r");
+              6: w_file = $fopen(("P16x8_Files/Tile1/weight_6.txt"), "r");
+              7: w_file = $fopen(("P16x8_Files/Tile1/weight_7.txt"), "r");
+              8: w_file = $fopen(("P16x8_Files/Tile1/weight_8.txt"), "r");
+            endcase
           endcase
+
           // NOTE: instead of writing all kijs before summing them (sequential
           // style), continuously perform the summation on the same psum elements.
           // A_pmem[9:6] = kij;
           // A_pmem[5:0] = 0;
 
 
-          w_file = $fopen(w_file_name, "r");
+          // w_file = $fopen(w_file_name, "r");
           // Following three lines are to remove the first three comment lines of the file
           w_scan_file = $fscanf(w_file, "%s", captured_data);
           w_scan_file = $fscanf(w_file, "%s", captured_data);
