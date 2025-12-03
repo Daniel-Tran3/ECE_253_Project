@@ -68,53 +68,21 @@ psum memory contents: after finishing
 13-th output featuremap Data matched! :D
 14-th output featuremap Data matched! :D
 15-th output featuremap Data matched! :D
-sfu 2nd psum input: ffa8
-sfu 2nd psum input: 1
 sfp_out: 00000000000000000000000000000009
-sfu 2nd psum input: ff4b
-sfu 2nd psum input: 1
 sfp_out: 00000000000000000000004e00000000
-sfu 2nd psum input: fdfa
-sfu 2nd psum input: 1
 sfp_out: 00000000000000000000012800000000
-sfu 2nd psum input: ff6a
-sfu 2nd psum input: 1
 sfp_out: 0000000000000000000001c100000000
-sfu 2nd psum input: fe75
-sfu 2nd psum input: 1
 sfp_out: 00000000000000000012000000000000
-sfu 2nd psum input: fee3
-sfu 2nd psum input: 1
 sfp_out: 00000000000000000000007a00000000
-sfu 2nd psum input: fdf7
-sfu 2nd psum input: 1
 sfp_out: 00000000000000000000000000000000
-sfu 2nd psum input: fea1
-sfu 2nd psum input: 1
 sfp_out: 00000000000000000000009e00000000
-sfu 2nd psum input: ff57
-sfu 2nd psum input: 1
 sfp_out: 000000000000006a0073000000000000
-sfu 2nd psum input: feb3
-sfu 2nd psum input: 1
 sfp_out: 0000000000000000007a00f800000000
-sfu 2nd psum input: ff3d
-sfu 2nd psum input: 1
 sfp_out: 0000000000000000003600c500000000
-sfu 2nd psum input: 0072
-sfu 2nd psum input: 0
 sfp_out: 00000000000000000136018400720000
-sfu 2nd psum input: ffb9
-sfu 2nd psum input: 1
 sfp_out: 001b0000000000000000000000000000
-sfu 2nd psum input: 0031
-sfu 2nd psum input: 0
 sfp_out: 0000000000ca00000226001300310000
-sfu 2nd psum input: fea8
-sfu 2nd psum input: 1
 sfp_out: 000000000000000001da000000000000
-sfu 2nd psum input: ff49
-sfu 2nd psum input: 1
 sfp_out: 00000173007100000143000000000000
 validating activated (ReLU'd) PSUMs
  0-th output featuremap Data matched! :D
@@ -154,244 +122,76 @@ Loading weights for Kij           7
 
 Loading weights for Kij           8
 
- 0-th output featuremap Data ERROR!!
-psum_sram: 009300e700bd0111009300e7003ffefd
-answer: fd11fe17fdc2ff9efeecff5fffa80009
-answer as vector:
- 11811  11822  11822  11822  11822  11822  11822  11822 
-
- 1-th output featuremap Data ERROR!!
-psum_sram: 01420062007e0188007e0126009afe4e
-answer: fc9dfd4bfd68fef8fd20004eff4bfd85
-answer as vector:
-     9    -88   -161   -276    -98   -574   -489   -751 
-
- 2-th output featuremap Data ERROR!!
-psum_sram: 0142ff9e009a01ce008c00c4002aff12
-answer: fd1dfcf2fc83fe4cfe150128fdfafe4b
-answer as vector:
-  -635   -181     78   -736   -264   -664   -693   -867 
-
- 3-th output featuremap Data ERROR!!
-psum_sram: 0023ffddfff900a100150157feefffb3
-answer: fdc0fedefd3bfdc4ff1601c1ff6afeb9
-answer as vector:
-  -437   -518    296   -491   -436   -893   -782   -739 
-
- 4-th output featuremap Data ERROR!!
-psum_sram: 00bd0015ff190023ffb3ff97013bffa5
-answer: ff66ff89fe47ff140012ff95fe75fbfe
-answer as vector:
-  -327   -150    449   -234   -572   -709   -290   -576 
-
- 5-th output featuremap Data ERROR!!
-psum_sram: 01180118fea2ff90001cffe401f80070
-answer: fe3efd0efd7efe5aff19007afee3fcce
-answer as vector:
- -1026   -395   -107     18   -236   -441   -119   -154 
-
- 6-th output featuremap Data ERROR!!
-psum_sram: 0134ff74ffe4008c0062fff201500126
-answer: fd7efeb4fd35fef1fe71ffeefdf7f9fc
-answer as vector:
-  -818   -285    122   -231   -422   -642   -754   -450 
-
- 7-th output featuremap Data ERROR!!
-psum_sram: 0069ffcf0015ffcf0093004d008500f5
-answer: ff92feaffddcff5ffede009efea1fb89
-answer as vector:
- -1540   -521    -18   -399   -271   -715   -332   -642 
-
+sfp_out: 0000000000000000000001e100310000
+sfp_out: 00000000000000000000004800000000
+sfp_out: 00000000000000000000007800000000
+sfp_out: 0000000000080000000000a400020000
+sfp_out: 00000000006f00000000025e00000000
+sfp_out: 00000000016600000000006000000000
+sfp_out: 00000000012b000000000000008a0000
+sfp_out: 010900000012006b0000014900000000
+sfp_out: 00000000000000000000000000000000
+sfp_out: 00000000000000000000000000000000
+sfp_out: 00000000000000000000000000000000
+sfp_out: 00000000000000000000000000000000
+sfp_out: 00000000000000000000000000000000
+sfp_out: 00000000000000000000000000000000
+sfp_out: 00000000000000000000000000000000
+sfp_out: 00000000000000000000000000000000
+ 0-th output featuremap Data matched! :D
+ 1-th output featuremap Data matched! :D
+ 2-th output featuremap Data matched! :D
+ 3-th output featuremap Data matched! :D
+ 4-th output featuremap Data matched! :D
+ 5-th output featuremap Data matched! :D
+ 6-th output featuremap Data matched! :D
+ 7-th output featuremap Data matched! :D
  8-th output featuremap Data ERROR!!
 psum_sram: 00000000000000000000000000000000
-answer: fe1cfefbfe7c006a0073ffceff57fcce
+answer: 00b50000005600000000016d003e0097
 answer as vector:
- -1143   -351    158   -290   -161   -548   -337   -110 
+     0      0    329      0    107     18      0    265 
 
  9-th output featuremap Data ERROR!!
 psum_sram: 00000000000000000000000000000000
-answer: ff30fdc0fe84fe75007a00f8feb3fb18
+answer: 00000000000000000000010100000000
 answer as vector:
-  -818   -169    -50    115    106   -388   -261   -484 
+   151     62    365      0      0     86      0    181 
 
 10-th output featuremap Data ERROR!!
 psum_sram: 00000000000000000000000000000000
-answer: ff2bfd84fd7cff9b003600c5ff3dfc7f
+answer: 00000000002900000000000100000000
 answer as vector:
- -1256   -333    248    122   -395   -380   -576   -208 
+     0      0    257      0      0      0      0      0 
 
 11-th output featuremap Data ERROR!!
 psum_sram: 00000000000000000000000000000000
-answer: fd15fe90fceafec0013601840072fb9c
+answer: 016e0000000000000000015100000000
 answer as vector:
-  -897   -195    197     54   -101   -644   -636   -213 
+     0      0      1      0      0     41      0      0 
 
 12-th output featuremap Data ERROR!!
 psum_sram: 00000000000000000000000000000000
-answer: 001bfedffed5fef6ff77ff00ffb9fc5b
+answer: 0000000000a200000000005800000000
 answer as vector:
- -1124    114    388    310   -320   -790   -368   -747 
+     0      0    337      0      0      0      0    366 
 
 13-th output featuremap Data ERROR!!
 psum_sram: 00000000000000000000000000000000
-answer: ffc2fe4e00caff3d022600130031fb1c
+answer: 006f000000650000000000c200000000
 answer as vector:
-  -933    -71   -256   -137   -266   -299   -289     27 
+     0      0     88      0      0    162      0      0 
 
 14-th output featuremap Data ERROR!!
 psum_sram: 00000000000000000000000000000000
-answer: fd7bfffaffb1fdba01daffa6fea8fd32
+answer: 00000000000000000000001f0097006c
 answer as vector:
- -1252     49     19    550   -195    202   -434    -62 
+     0      0    194      0      0    101      0    111 
 
 15-th output featuremap Data ERROR!!
 psum_sram: 00000000000000000000000000000000
-answer: ffc501730071ff5a0143ff0fff49fc99
+answer: 0163000000cd0000000001b900000000
 answer as vector:
-  -718   -344    -90    474   -582    -79     -6   -645 
+   108    151     31      0      0      0      0      0 
 
-sfu 2nd psum input: 003f
-sfu 2nd psum input: 0
-sfp_out: 009300e700bd0111009300e7003f0000
-sfu 2nd psum input: 009a
-sfu 2nd psum input: 0
-sfp_out: 01420062007e0188007e0126009a0000
-sfu 2nd psum input: 002a
-sfu 2nd psum input: 0
-sfp_out: 01420000009a01ce008c00c4002a0000
-sfu 2nd psum input: feef
-sfu 2nd psum input: 1
-sfp_out: 00230000000000a10015015700000000
-sfu 2nd psum input: 013b
-sfu 2nd psum input: 0
-sfp_out: 00bd00150000002300000000013b0000
-sfu 2nd psum input: 01f8
-sfu 2nd psum input: 0
-sfp_out: 0118011800000000001c000001f80070
-sfu 2nd psum input: 0150
-sfu 2nd psum input: 0
-sfp_out: 013400000000008c0062000001500126
-sfu 2nd psum input: 0085
-sfu 2nd psum input: 0
-sfp_out: 00690000001500000093004d008500f5
-sfu 2nd psum input: 0000
-sfu 2nd psum input: 0
-sfp_out: 00000000000000000000000000000000
-sfu 2nd psum input: 0000
-sfu 2nd psum input: 0
-sfp_out: 00000000000000000000000000000000
-sfu 2nd psum input: 0000
-sfu 2nd psum input: 0
-sfp_out: 00000000000000000000000000000000
-sfu 2nd psum input: 0000
-sfu 2nd psum input: 0
-sfp_out: 00000000000000000000000000000000
-sfu 2nd psum input: 0000
-sfu 2nd psum input: 0
-sfp_out: 00000000000000000000000000000000
-sfu 2nd psum input: 0000
-sfu 2nd psum input: 0
-sfp_out: 00000000000000000000000000000000
-sfu 2nd psum input: 0000
-sfu 2nd psum input: 0
-sfp_out: 00000000000000000000000000000000
-sfu 2nd psum input: 0000
-sfu 2nd psum input: 0
-sfp_out: 00000000000000000000000000000000
- 0-th output featuremap Data ERROR!!
-psum_sram: 009300e700bd0111009300e7003f0000
-answer: 00000000000000000000000000000009
-answer as vector:
- 11811  11822  11822  11822  11822  11822  11822  11822 
-
- 1-th output featuremap Data ERROR!!
-psum_sram: 01420062007e0188007e0126009a0000
-answer: 00000000000000000000004e00000000
-answer as vector:
-     9      0      0      0      0      0      0      0 
-
- 2-th output featuremap Data ERROR!!
-psum_sram: 01420000009a01ce008c00c4002a0000
-answer: 00000000000000000000012800000000
-answer as vector:
-     0      0     78      0      0      0      0      0 
-
- 3-th output featuremap Data ERROR!!
-psum_sram: 00230000000000a10015015700000000
-answer: 0000000000000000000001c100000000
-answer as vector:
-     0      0    296      0      0      0      0      0 
-
- 4-th output featuremap Data ERROR!!
-psum_sram: 00bd00150000002300000000013b0000
-answer: 00000000000000000012000000000000
-answer as vector:
-     0      0    449      0      0      0      0      0 
-
- 5-th output featuremap Data ERROR!!
-psum_sram: 0118011800000000001c000001f80070
-answer: 00000000000000000000007a00000000
-answer as vector:
-     0      0      0     18      0      0      0      0 
-
- 6-th output featuremap Data ERROR!!
-psum_sram: 013400000000008c0062000001500126
-answer: 00000000000000000000000000000000
-answer as vector:
-     0      0    122      0      0      0      0      0 
-
- 7-th output featuremap Data ERROR!!
-psum_sram: 00690000001500000093004d008500f5
-answer: 00000000000000000000009e00000000
-answer as vector:
-     0      0      0      0      0      0      0      0 
-
- 8-th output featuremap Data ERROR!!
-psum_sram: 00000000000000000000000000000000
-answer: 000000000000006a0073000000000000
-answer as vector:
-     0      0    158      0      0      0      0      0 
-
- 9-th output featuremap Data ERROR!!
-psum_sram: 00000000000000000000000000000000
-answer: 0000000000000000007a00f800000000
-answer as vector:
-     0      0      0    115    106      0      0      0 
-
-10-th output featuremap Data ERROR!!
-psum_sram: 00000000000000000000000000000000
-answer: 0000000000000000003600c500000000
-answer as vector:
-     0      0    248    122      0      0      0      0 
-
-11-th output featuremap Data ERROR!!
-psum_sram: 00000000000000000000000000000000
-answer: 00000000000000000136018400720000
-answer as vector:
-     0      0    197     54      0      0      0      0 
-
-12-th output featuremap Data ERROR!!
-psum_sram: 00000000000000000000000000000000
-answer: 001b0000000000000000000000000000
-answer as vector:
-     0    114    388    310      0      0      0      0 
-
-13-th output featuremap Data ERROR!!
-psum_sram: 00000000000000000000000000000000
-answer: 0000000000ca00000226001300310000
-answer as vector:
-     0      0      0      0      0      0      0     27 
-
-14-th output featuremap Data ERROR!!
-psum_sram: 00000000000000000000000000000000
-answer: 000000000000000001da000000000000
-answer as vector:
-     0     49     19    550      0    202      0      0 
-
-15-th output featuremap Data ERROR!!
-psum_sram: 00000000000000000000000000000000
-answer: 00000173007100000143000000000000
-answer as vector:
-     0      0      0    474      0      0      0      0 
-
-./verilog/core_tb.v:1105: $finish called at 2550500 (1ps)
+./verilog/core_tb.v:1106: $finish called at 2533500 (1ps)
