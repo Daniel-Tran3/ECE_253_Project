@@ -12,10 +12,23 @@ cfg = {
     'VGG16_quant': [64, 64, 'M', 128, 128, 'M', 256, 256, 256, 'M', 512, 512, 512, 'M', 512, 512, 512, 'M'],
     'final_VGG16_quant': [64, 64, 'M', 128, 128, 'M', 256, 256, 256, 'M', 8, 'S', 512, 'M', 512, 512, 512, 'M'],
     'final_P2_VGG16_quant': [64, 64, 'M', 128, 128, 'M', 256, 256, 256, 'M', 16, 'S2', 512, 'M', 512, 512, 512, 'M'],
+    'final_P3_VGG16_quant': [64, 64, 'M', 128, 128, 'M', 256, 256, 256, 'M', 8, 'S_coupled', 'S_coupled', 8, 'M', 512, 512, 512, 'M'],
+    'final_16x16_quant': [64, 64, 'M', 128, 128, 'M', 256, 256, 256, 'M', 16, 'S16', 512, 'M', 512, 512, 512, 'M'],
+    'final_16x8_quant': [64, 64, 'M', 128, 128, 'M', 256, 256, 256, 'M', 16, 'S16x8', 512, 'M', 512, 512, 512, 'M'],
+    'final_feed_quant': [64, 64, 'M', 128, 128, 'M', 256, 256, 256, 'M', 8, 'S_feed', 'S_feed', 8, 'M', 512, 512, 512, 'M'],
     'VGG16': ['F', 64, 'M', 128, 128, 'M', 256, 256, 256, 'M', 512, 512, 512, 'M', 512, 512, 512, 'M'],
     'VGG19': [64, 64, 'M', 128, 128, 'M', 256, 256, 256, 256, 'M', 512, 512, 512, 512, 'M', 512, 512, 512, 512, 'M'],
 }
 
+class LSBs(nn.Module):
+    def __init__(self, shift=0):
+        super(LSBs, self).__init__()
+        self.shift = shift
+
+    def forward(self, x):
+        #print(x)
+        out = torch.remainder(torch.floor(torch.mul(x, 0.5**self.shift)), 16)
+        return out
 
 class VGG_quant(nn.Module):
     def __init__(self, vgg_name, act_bits=4, w_bits=4):
@@ -43,6 +56,8 @@ class VGG_quant(nn.Module):
                            nn.ReLU(inplace=True)]
                 in_channels = 64
             elif x == 'S':
+                #layers += [QuantConv2d(in_channels, 8, kernel_size=3, padding=1, act_bits=act_bits, w_bits=w_bits),
+                 #          nn.ReLU(inplace=True)]
                 layers += [QuantConv2d(in_channels, 8, kernel_size=3, padding=1, act_bits=act_bits, w_bits=w_bits),
                            nn.ReLU(inplace=True)]
                 in_channels = 8
@@ -50,12 +65,34 @@ class VGG_quant(nn.Module):
                 layers += [QuantConv2d(in_channels, 16, kernel_size=3, padding=1, act_bits=act_bits, w_bits=w_bits),
                            nn.ReLU(inplace=True)]
                 in_channels = 16
+            elif x == 'S16':
+                layers += [QuantConv2d(in_channels, 16, kernel_size=3, padding=1, act_bits=act_bits, w_bits=w_bits),
+                           nn.ReLU(inplace=True)]
+                in_channels = 16
+            elif x == 'S16x8':
+                layers += [QuantConv2d(in_channels, 8, kernel_size=3, padding=1, act_bits=act_bits, w_bits=w_bits),
+                           nn.ReLU(inplace=True)]
+                in_channels = 8
+            elif x == 'S_coupled':
+                #layers += [QuantConv2d(in_channels, 8, kernel_size=3, padding=1, act_bits=act_bits, w_bits=w_bits),
+                 #          nn.ReLU(inplace=True)]
+                layers += [QuantConv2d(in_channels, 8, kernel_size=3, padding=1, act_bits=act_bits, w_bits=w_bits),
+                           nn.ReLU(inplace=True)]
+                in_channels = 8
+            elif x == 'S_feed':
+                #layers += [QuantConv2d(in_channels, 8, kernel_size=3, padding=1, act_bits=act_bits, w_bits=w_bits),
+                 #          nn.ReLU(inplace=True)]
+                layers += [QuantConv2d4b(in_channels, 8, kernel_size=3, padding=1, act_bits=act_bits, w_bits=w_bits),
+                           nn.ReLU(inplace=True),
+                           LSBs(shift=0)]
+                in_channels = 8
             else:
                 layers += [QuantConv2d(in_channels, x, kernel_size=3, padding=1, act_bits=act_bits, w_bits=w_bits),
                            nn.BatchNorm2d(x),
                            nn.ReLU(inplace=True)]
                 in_channels = x
-        layers += [nn.AvgPool2d(kernel_size=1, stride=1)]
+        if x != 'S_feed':
+            layers += [nn.AvgPool2d(kernel_size=1, stride=1)]
         return nn.Sequential(*layers)
 
     def show_params(self):
@@ -72,8 +109,23 @@ def final_VGG16_quant(**kwargs):
     model = VGG_quant(vgg_name = 'final_VGG16_quant', act_bits=4, w_bits=4, **kwargs)
     return model
 
+def final_16x16_quant(**kwargs):
+    model = VGG_quant(vgg_name = 'final_16x16_quant', act_bits=4, w_bits=4, **kwargs)
+    return model
+
+def final_16x8_quant(**kwargs):
+    model = VGG_quant(vgg_name = 'final_16x8_quant', act_bits=4, w_bits=4, **kwargs)
+    return model
+
 def final_P2_VGG16_quant(**kwargs):
     model = VGG_quant(vgg_name = 'final_P2_VGG16_quant', act_bits=2, w_bits=4, **kwargs)
     return model
 
+def final_P3_VGG16_quant(**kwargs):
+    model = VGG_quant(vgg_name = 'final_P3_VGG16_quant', act_bits=4, w_bits=4, **kwargs)
+    return model
+    
+def final_feed_quant(**kwargs):
+    model = VGG_quant(vgg_name = 'final_feed_quant', act_bits=4, w_bits=4, **kwargs)
+    return model
 

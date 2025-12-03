@@ -58,7 +58,6 @@ class weight_quantize_fn(nn.Module):
         
         return weight_q
 
-
 def act_quantization(b):
 
     def uniform_quant(x, b=4):
@@ -88,6 +87,38 @@ def act_quantization(b):
 
     return _uq().apply
 
+def act_quantization4b(b):
+
+    def uniform_quant(x, b=4):
+        xdiv = x.mul(2 ** b - 1)
+        xhard = xdiv.round().div(2 ** b - 1)
+        return xhard
+
+    class _uq(torch.autograd.Function):
+        @staticmethod
+        def forward(ctx, input, alpha):
+            #print(input)
+            input=input.div(alpha)
+            input_c = input.clamp(max=1)  # Mingu edited for Alexnet
+            #print(input)
+            input_q = uniform_quant(input_c, b)
+            #print(input)
+            ctx.save_for_backward(input, input_q)
+            input_q = input_q.mul(alpha)
+            #print(input)
+            return input_q
+
+        @staticmethod
+        def backward(ctx, grad_output):
+            grad_input = grad_output.clone()
+            input, input_q = ctx.saved_tensors
+            i = (input > 1.).float()
+            #grad_alpha = (grad_output * (i + (input_q - input) * (1 - i))).sum()
+            grad_alpha = (grad_output * (i + (0.0)*(1-i))).sum()
+            grad_input = grad_input*(1-i)
+            return grad_input, grad_alpha
+
+    return _uq().apply
 
 class QuantConv2d(nn.Conv2d):
     def __init__(self, in_channels, out_channels, kernel_size, stride=1, padding=0, dilation=1, groups=1, act_bits=4, w_bits=4, bias=False):
@@ -113,3 +144,26 @@ class QuantConv2d(nn.Conv2d):
         act_alpha = round(self.act_alpha.data.item(), 3)
         print('clipping threshold weight alpha: {:2f}, activation alpha: {:2f}'.format(wgt_alpha, act_alpha))
 
+class QuantConv2d4b(nn.Conv2d):
+    def __init__(self, in_channels, out_channels, kernel_size, stride=1, padding=0, dilation=1, groups=1, act_bits=4, w_bits=4, bias=False):
+        super(QuantConv2d4b, self).__init__(in_channels, out_channels, kernel_size, stride, padding, dilation, groups,
+                                          bias)
+        self.layer_type = 'QuantConv2d4b'
+        self.act_bits = act_bits
+        self.w_bits = w_bits
+        self.weight_quant = weight_quantize_fn(w_bit=self.w_bits)
+        self.act_alq = act_quantization4b(self.act_bits)
+        self.act_alpha = torch.nn.Parameter(torch.tensor(8.0))
+        self.weight_q  = torch.nn.Parameter(torch.zeros([out_channels, in_channels, kernel_size, kernel_size]))
+        
+    def forward(self, x):
+        weight_q = self.weight_quant(self.weight)       
+        #self.register_parameter('weight_q', Parameter(weight_q))  # Mingu added
+        self.weight_q = torch.nn.Parameter(weight_q)  # Store weight_q during the training
+        x = self.act_alq(x, self.act_alpha)
+        return F.conv2d(x, weight_q, self.bias, self.stride, self.padding, self.dilation, self.groups)
+    
+    def show_params(self):
+        wgt_alpha = round(self.weight_quant.wgt_alpha.data.item(), 3)
+        act_alpha = round(self.act_alpha.data.item(), 3)
+        print('clipping threshold weight alpha: {:2f}, activation alpha: {:2f}'.format(wgt_alpha, act_alpha))
