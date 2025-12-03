@@ -46,13 +46,6 @@ Nij12…nij15 nij18…nij21
 Nij13…nij16 nij19…nij22
 Nij14…nij17 nij20…nij23
 
-Note: For Part 3 and all other derivative alphas, we test on nij 0-15 for both WS and OS. 
-However, our OS hardware only calculates up to nij 0-7 and zeros out the other columns.
-The OS verification is always the last one run, and therefore expects to see outputs 8-15 error.
-This is expected, and does not (we feel) impact the correctness of the design.
-Outputs 0-7 are the ones we actually calculate, and those should be correct.
-Outputs 8-15 are also correct for any WS calculations.
-
 
 Alphas:
 
