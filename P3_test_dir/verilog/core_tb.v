@@ -154,6 +154,30 @@ module core_tb;
   // register for splitting answer into separate tokens
   wire [psum_bw-1:0] answer_split[col-1:0];
 
+  core #(
+      .bw (bw),
+      .col(col),
+      .row(row)
+  ) core_instance (
+      .clk  (clk),
+      .reset(reset),
+
+      // inputs
+      .inst(inst_q),
+      .D_xmem(D_xmem_q),
+      .D_pmem(D_pmem_q),
+      .execution_mode(execution_mode_q),
+      .ififo_mode(ififo_mode_q),
+      .xw_mode(xw_mode_q),
+      .pmem_mode(pmem_mode_q),
+      .relu_en(relu_en_q),
+      .sfp_reset(sfp_reset),
+
+      // outputs
+      .ofifo_valid(ofifo_valid),
+      .sfp_out(sfp_out)
+  );
+
   for (gr = 0; gr < row; gr = gr + 1) begin : gen_pe_probes_row
     for (gc = 0; gc < col; gc = gc + 1) begin : gen_pe_probes_col
       assign pe_bq_probe[gr][gc] = core_instance.corelet_instance.mac_array_instance.row_num[gr+1].mac_row_instance.col_num[gc+1].mac_tile_instance.b_q;
@@ -217,35 +241,17 @@ module core_tb;
     end
   endtask
 
-  core #(
-      .bw (bw),
-      .col(col),
-      .row(row)
-  ) core_instance (
-      .clk  (clk),
-      .reset(reset),
-
-      // inputs
-      .inst(inst_q),
-      .D_xmem(D_xmem_q),
-      .D_pmem(D_pmem_q),
-      .execution_mode(execution_mode_q),
-      .ififo_mode(ififo_mode_q),
-      .xw_mode(xw_mode_q),
-      .pmem_mode(pmem_mode_q),
-      .relu_en(relu_en_q),
-      .sfp_reset(sfp_reset),
-
-      // outputs
-      .ofifo_valid(ofifo_valid),
-      .sfp_out(sfp_out)
-  );
-
 
   // useful tasks
   task automatic compare_psum_out;
+    input reg [1:0] mode;
     begin
-      out_file = $fopen("P16x8_Files/out_no_relu.txt", "r");
+      case (mode)
+        0: out_file = $fopen("P16x8_Files/out_no_relu.txt", "r");
+        1: out_file = $fopen("P16x8_Files/out_relu.txt", "r");
+        2: out_file = $fopen("out.txt", "r");
+        3: out_file = $fopen("out_no_relu.txt", "r");
+      endcase
 
       // Following three lines are to remove the first three comment lines of the file
       out_scan_file = $fscanf(out_file, "%s", answer);
@@ -342,6 +348,56 @@ module core_tb;
       sfp_reset = 0;
       #0.5 clk = 1'b1;
 
+      #0.5 clk = 1'b0;
+      #0.5 clk = 1'b1;
+    end
+  endtask
+
+  task automatic write_relu;
+    begin
+      RA_pmem   = 0;
+      WA_pmem   = 0;
+      pmem_mode = 1;  // write from SFP back to psums
+      relu_en   = 1;
+      // Pass psums thru SFP to perform ReLU
+      for (i = 0; i < len_onij; i = i + 1) begin
+        CEN_pmem = 0;
+        if (i > 0) begin
+          RA_pmem = RA_pmem + 1;
+          WA_pmem = WA_pmem + 1;
+        end
+        // t = 0+i: reset SFP. Make sure to turn off write request (in case of loop). perform a read request to PSUM memory
+        sfp_reset = 1;
+        WEN_pmem  = 1;
+        #0.5 clk = 1'b1;
+        #0.5 clk = 1'b0;
+
+        // t = 1+h: SFP accumulator is zero'd. Data is available to SFU and is about to be computed
+        sfp_reset = 0;
+        acc = 1;  // this is just an SFU enable bit
+        #0.5 clk = 1'b1;
+        #0.5 clk = 1'b0;
+        $display("sfu 2nd psum input: %h",
+                 core_instance.corelet_instance.sfp_instance.in_psum[psum_bw*2-1:psum_bw]);
+        $display("sfu 2nd psum input: %b",
+                 core_instance.corelet_instance.sfp_instance.in_psum[psum_bw*2-1]);
+
+        // t = 2+h: SFP has the correct value, but needs to wait a cycle due
+        // to sfp_out_q being registered.
+        sfp_reset = 0;
+        acc = 0;
+        #0.5 clk = 1'b1;
+        #0.5 clk = 1'b0;
+
+        // t = 3+h: value is available at write port of psum. Write it.
+        WEN_pmem = 0;
+        #0.5 clk = 1'b1;
+        #0.5 clk = 1'b0;
+        $display("sfp_out: %h", sfp_out);
+      end
+
+      WEN_pmem = 1;
+      CEN_pmem = 1;
       #0.5 clk = 1'b0;
       #0.5 clk = 1'b1;
     end
@@ -643,7 +699,6 @@ module core_tb;
 
             // $display("ififo read: %b", ififo_rd_q);
             // $display("ififo out: %b", core_instance.corelet_instance.ififo_output);
-            print_pe_status();
             //
             // j = 0;
           end
@@ -762,7 +817,7 @@ module core_tb;
             // verify some things
             // print_pe_status();
             // print valid bits coming out of the last column
-            print_pe_status();
+
           end
 
           execute = 0;
@@ -777,10 +832,6 @@ module core_tb;
           l0_rd = 0;
           // $display("psum memory contents:");
           // if (kij == 0) $finish;
-          $display("psum memory contents: for kij %d", kij);
-          for (t = 0; t < len_onij; t = t + 1) begin
-            $display("%d: %32h", t, core_instance.psum_sram.memory[t]);
-          end
         end
       end
 
@@ -822,7 +873,7 @@ module core_tb;
         end
       end
 
-      compare_psum_out();
+      compare_psum_out(0);
 
       #0.5 clk = 1'b0;
       CEN_pmem  = 1;
@@ -830,23 +881,27 @@ module core_tb;
       WA_pmem   = 0;
       pmem_mode = 0;
       #0.5 clk = 1'b1;
+      #0.5 clk = 1'b0;
 
+      RA_pmem   = 0;
+      WA_pmem   = 0;
+      pmem_mode = 1;  // write from SFP back to psums
+      relu_en   = 1;
 
       // Pass psums thru SFP to perform ReLU
-      pmem_mode = 1;  // write from SFP back to psums
-      for (t = 0; t < 10; t = t + 1) begin
-        if (0 <= t && t < len_onij) begin
-          relu_en = 1;
-        end else begin
-          relu_en = 0;
-        end
-      end
+      write_relu();
+
+      WEN_pmem = 1;
+      CEN_pmem = 1;
 
       for (t = 0; t < 10; t = t + 1) begin
         #0.5 clk = 1'b0;
         #0.5 clk = 1'b1;
       end
 
+      // validate activated PSUMs against ReLU
+      $display("validating activated (ReLU'd) PSUMs");
+      compare_psum_out(1);
     end
 
     // Now for Output-Stationary Execution!
@@ -860,9 +915,7 @@ module core_tb;
     $display("\nZeroed out psum; expect failure\n");
     // compare_psum_out();
 
-    // reset the machine
-    // required each time we compute an output tile in order to set c_ij of
-    // all elements to 0.
+    // reset the machine, just because
     reset_core();
 
     // load weights into weight SRAM
@@ -964,46 +1017,6 @@ module core_tb;
         $finish;
       end
     end
-
-    // hack for writing 0s into c_q without a huge reset signal. /////////
-
-    // TODO: see if you don't need to set all c_qs to 0 beforehand
-    // point pmem to a 0 vector
-    // WEN_pmem = 1;  // read only
-    // CEN_pmem = 0;  // activate pmem
-    // RA_pmem = 0;  // address 0 should have a 0 right now
-    // execution_mode = 1;  // might as well switch to OS mode now.
-    // #0.5 clk = 1'b1;
-    // #0.5 clk = 1'b0;
-    //
-    // for (t = 0; t < 2 * row + 2; t = t + 1) begin
-    //   // t = 0: write ONE zero vector to IFIFO (from PSUMs, which have been
-    //   // zerod out)
-    //   // DONT issue a read instruction so that the vector aliases
-    //   // issue a flush instruction to PEs
-    //   // we need to issue two flush instructions; the second one ensures that
-    //   // the row below any given row still sees c_q
-    //   if (t == 0) begin
-    //     ififo_wr = 1;
-    //     ififo_mode = 1;  // read into ififo from psum
-    //     load = 1;
-    //   end else begin
-    //     ififo_wr = 0;  // do not add more than one zero vector
-    //     ififo_mode = 0;  // reset to defaults
-    //     load = 0;
-    //   end
-    //
-    //   #0.5 clk = 1'b1;
-    //   #0.5 clk = 1'b0;
-    // end
-    //
-    // ififo_rd = 1;
-    // #0.5 clk = 1'b1;
-    // #0.5 clk = 1'b0;
-    // ififo_rd = 0;
-    // #0.5 clk = 1'b1;
-    // #0.5 clk = 1'b0;
-
     // OS EXECUTE
     pmem_mode = 0;
     CEN_xmem = 0;
@@ -1080,7 +1093,16 @@ module core_tb;
     #0.5 clk = 1'b1;
     #0.5 clk = 1'b0;
 
-    compare_psum_out();  // only the first 8 need to match
+    compare_psum_out(2);  // only the first 8 need to match
+
+    #0.5 clk = 1'b1;
+    #0.5 clk = 1'b0;
+
+    // Pass psums thru SFP to perform ReLU
+    write_relu();
+
+    // TODO: validate against ground truth
+    compare_psum_out(3);
 
     #10 $finish;
 
