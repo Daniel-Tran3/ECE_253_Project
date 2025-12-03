@@ -1,0 +1,113 @@
+VCD info: dumpfile core_tb.vcd opened for output.
+Kij           0
+
+Kij           1
+
+Kij           2
+
+Kij           3
+
+Kij           4
+
+Kij           5
+
+Kij           6
+
+Kij           7
+
+Kij           8
+
+ 0-th output featuremap Data matched! :D
+ 1-th output featuremap Data matched! :D
+ 2-th output featuremap Data matched! :D
+ 3-th output featuremap Data matched! :D
+ 4-th output featuremap Data matched! :D
+ 5-th output featuremap Data matched! :D
+ 6-th output featuremap Data matched! :D
+ 7-th output featuremap Data matched! :D
+ 8-th output featuremap Data matched! :D
+ 9-th output featuremap Data matched! :D
+10-th output featuremap Data matched! :D
+11-th output featuremap Data matched! :D
+12-th output featuremap Data matched! :D
+13-th output featuremap Data matched! :D
+14-th output featuremap Data matched! :D
+15-th output featuremap Data matched! :D
+
+Zeroed out psum
+
+Loading weights for Kij           0
+
+Loading weights for Kij           1
+
+Loading weights for Kij           2
+
+Loading weights for Kij           3
+
+Loading weights for Kij           4
+
+Loading weights for Kij           5
+
+Loading weights for Kij           6
+
+Loading weights for Kij           7
+
+Loading weights for Kij           8
+
+ 0-th output featuremap Data matched! :D
+ 1-th output featuremap Data matched! :D
+ 2-th output featuremap Data matched! :D
+ 3-th output featuremap Data matched! :D
+ 4-th output featuremap Data matched! :D
+ 5-th output featuremap Data matched! :D
+ 6-th output featuremap Data matched! :D
+ 7-th output featuremap Data matched! :D
+ 8-th output featuremap Data ERROR!!
+psum_sram: 00000000000000000000000000000000
+answer: 0015004dffcfffebffcffff9ffcfffcf
+answer as vector:
+   245    133     77    147    -49     21    -49    105 
+
+ 9-th output featuremap Data ERROR!!
+psum_sram: 00000000000000000000000000000000
+answer: ffcf0085ffb3ffa5003fffebfff9004d
+answer as vector:
+   -49    -49     -7    -49    -21    -49     77     21 
+
+10-th output featuremap Data ERROR!!
+psum_sram: 00000000000000000000000000000000
+answer: 0085ff970015004d0015ffc1ffeb003f
+answer as vector:
+    77     -7    -21     63    -91    -77    133    -49 
+
+11-th output featuremap Data ERROR!!
+psum_sram: 00000000000000000000000000000000
+answer: ffe400540038ffd600460054000e007e
+answer as vector:
+    63    -21    -63     21     77     21   -105    133 
+
+12-th output featuremap Data ERROR!!
+psum_sram: 00000000000000000000000000000000
+answer: 002afff2000e00000054001c0000001c
+answer as vector:
+   126     14     84     70    -42     56     84    -28 
+
+13-th output featuremap Data ERROR!!
+psum_sram: 00000000000000000000000000000000
+answer: 003100150007fff9ffebffeb0015ffc1
+answer as vector:
+    28      0     28     84      0     14    -14     42 
+
+14-th output featuremap Data ERROR!!
+psum_sram: 00000000000000000000000000000000
+answer: 0031ffcf003100230031ffcf00070023
+answer as vector:
+   -63     21    -21    -21     -7      7     21     49 
+
+15-th output featuremap Data ERROR!!
+psum_sram: 00000000000000000000000000000000
+answer: fff20054001c00460054002a00460000
+answer as vector:
+    35      7    -49     49     35     49    -49     49 
+
+./verilog/core_tb.v:1014: $finish called at 1412000 (1ps)
