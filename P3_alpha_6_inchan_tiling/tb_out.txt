@@ -36,22 +36,22 @@ Kij           7
 Kij           8
 
 psum memory contents: after finishing
-          0: fd11fe17fdc2ff9efeecff5fffa80009
-          1: fc9dfd4bfd68fef8fd20004eff4bfd85
-          2: fd1dfcf2fc83fe4cfe150128fdfafe4b
-          3: fdc0fedefd3bfdc4ff1601c1ff6afeb9
-          4: ff66ff89fe47ff140012ff95fe75fbfe
-          5: fe3efd0efd7efe5aff19007afee3fcce
-          6: fd7efeb4fd35fef1fe71ffeefdf7f9fc
-          7: ff92feaffddcff5ffede009efea1fb89
-          8: fe1cfefbfe7c006a0073ffceff57fcce
-          9: ff30fdc0fe84fe75007a00f8feb3fb18
-         10: ff2bfd84fd7cff9b003600c5ff3dfc7f
-         11: fd15fe90fceafec0013601840072fb9c
-         12: 001bfedffed5fef6ff77ff00ffb9fc5b
-         13: ffc2fe4e00caff3d022600130031fb1c
-         14: fd7bfffaffb1fdba01daffa6fea8fd32
-         15: ffc501730071ff5a0143ff0fff49fc99
+          0: fd88fde1fdfdff7eff5bfeabfd6d0143
+          1: fe21fcdbfd98fcf6fea4fef3fe10004e
+          2: ff32fdcffeaffd50fe3efe55fd84ff88
+          3: 0020ff3efeb9fee3fe410241fe41fefd
+          4: fc6bfe7cfe2bfbddff38fdcbff26fe35
+          5: fdccfe72fa61fbddfeadfd8afcc9ffa5
+          6: fcecfe25fd5efb5bfee0fd6bfc74fd85
+          7: fe72fdbffd96fe40fd84002dfbe3fe17
+          8: fe11fecefdd2fec90042fcd0fdb3fea8
+          9: fc9cfee2fca6fb7afe65fd01fdb6ff9d
+         10: fcfafeaafab9fbd6fd6ffc92fdcbfd24
+         11: fef9ff01ff77fdbdfed3ffa6f9fffea2
+         12: fe13ff6cfeabfebbff49fd77ffe4fe46
+         13: fce7ffc4fd9afe5aff84fe6cfe61fd6c
+         14: fc7a0016fdc5fc8400b8fd9cfc88fe6a
+         15: ff85feeafe7afe22ffc4ff7afdddfde7
  0-th output featuremap Data matched! :D
  1-th output featuremap Data matched! :D
  2-th output featuremap Data matched! :D
@@ -68,22 +68,22 @@ psum memory contents: after finishing
 13-th output featuremap Data matched! :D
 14-th output featuremap Data matched! :D
 15-th output featuremap Data matched! :D
-sfp_out: 00000000000000000000000000000009
-sfp_out: 00000000000000000000004e00000000
-sfp_out: 00000000000000000000012800000000
-sfp_out: 0000000000000000000001c100000000
-sfp_out: 00000000000000000012000000000000
-sfp_out: 00000000000000000000007a00000000
+sfp_out: 00000000000000000000000000000143
+sfp_out: 0000000000000000000000000000004e
 sfp_out: 00000000000000000000000000000000
-sfp_out: 00000000000000000000009e00000000
-sfp_out: 000000000000006a0073000000000000
-sfp_out: 0000000000000000007a00f800000000
-sfp_out: 0000000000000000003600c500000000
-sfp_out: 00000000000000000136018400720000
-sfp_out: 001b0000000000000000000000000000
-sfp_out: 0000000000ca00000226001300310000
-sfp_out: 000000000000000001da000000000000
-sfp_out: 00000173007100000143000000000000
+sfp_out: 00200000000000000000024100000000
+sfp_out: 00000000000000000000000000000000
+sfp_out: 00000000000000000000000000000000
+sfp_out: 00000000000000000000000000000000
+sfp_out: 00000000000000000000002d00000000
+sfp_out: 00000000000000000042000000000000
+sfp_out: 00000000000000000000000000000000
+sfp_out: 00000000000000000000000000000000
+sfp_out: 00000000000000000000000000000000
+sfp_out: 00000000000000000000000000000000
+sfp_out: 00000000000000000000000000000000
+sfp_out: 000000160000000000b8000000000000
+sfp_out: 00000000000000000000000000000000
 validating activated (ReLU'd) PSUMs
  0-th output featuremap Data matched! :D
  1-th output featuremap Data matched! :D
@@ -122,14 +122,40 @@ Loading weights for Kij           7
 
 Loading weights for Kij           8
 
-sfp_out: 0000000000000000000001e100310000
-sfp_out: 00000000000000000000004800000000
-sfp_out: 00000000000000000000007800000000
-sfp_out: 0000000000080000000000a400020000
-sfp_out: 00000000006f00000000025e00000000
-sfp_out: 00000000016600000000006000000000
-sfp_out: 00000000012b000000000000008a0000
-sfp_out: 010900000012006b0000014900000000
+Loading weights for Kij           9
+
+Loading weights for Kij          10
+
+Loading weights for Kij          11
+
+Loading weights for Kij          12
+
+Loading weights for Kij          13
+
+Loading weights for Kij          14
+
+Loading weights for Kij          15
+
+Loading weights for Kij          16
+
+Loading weights for Kij          17
+
+ 0-th output featuremap Data matched! :D
+ 1-th output featuremap Data matched! :D
+ 2-th output featuremap Data matched! :D
+ 3-th output featuremap Data matched! :D
+ 4-th output featuremap Data matched! :D
+ 5-th output featuremap Data matched! :D
+ 6-th output featuremap Data matched! :D
+ 7-th output featuremap Data matched! :D
+sfp_out: 00000000000000000000000000000143
+sfp_out: 0000000000000000000000000000004e
+sfp_out: 00000000000000000000000000000000
+sfp_out: 00200000000000000000024100000000
+sfp_out: 00000000000000000000000000000000
+sfp_out: 00000000000000000000000000000000
+sfp_out: 00000000000000000000000000000000
+sfp_out: 00000000000000000000002d00000000
 sfp_out: 00000000000000000000000000000000
 sfp_out: 00000000000000000000000000000000
 sfp_out: 00000000000000000000000000000000
@@ -146,52 +172,4 @@ sfp_out: 00000000000000000000000000000000
  5-th output featuremap Data matched! :D
  6-th output featuremap Data matched! :D
  7-th output featuremap Data matched! :D
- 8-th output featuremap Data ERROR!!
-psum_sram: 00000000000000000000000000000000
-answer: 00b50000005600000000016d003e0097
-answer as vector:
-     0      0    329      0    107     18      0    265 
-
- 9-th output featuremap Data ERROR!!
-psum_sram: 00000000000000000000000000000000
-answer: 00000000000000000000010100000000
-answer as vector:
-   151     62    365      0      0     86      0    181 
-
-10-th output featuremap Data ERROR!!
-psum_sram: 00000000000000000000000000000000
-answer: 00000000002900000000000100000000
-answer as vector:
-     0      0    257      0      0      0      0      0 
-
-11-th output featuremap Data ERROR!!
-psum_sram: 00000000000000000000000000000000
-answer: 016e0000000000000000015100000000
-answer as vector:
-     0      0      1      0      0     41      0      0 
-
-12-th output featuremap Data ERROR!!
-psum_sram: 00000000000000000000000000000000
-answer: 0000000000a200000000005800000000
-answer as vector:
-     0      0    337      0      0      0      0    366 
-
-13-th output featuremap Data ERROR!!
-psum_sram: 00000000000000000000000000000000
-answer: 006f000000650000000000c200000000
-answer as vector:
-     0      0     88      0      0    162      0      0 
-
-14-th output featuremap Data ERROR!!
-psum_sram: 00000000000000000000000000000000
-answer: 00000000000000000000001f0097006c
-answer as vector:
-     0      0    194      0      0    101      0    111 
-
-15-th output featuremap Data ERROR!!
-psum_sram: 00000000000000000000000000000000
-answer: 0163000000cd0000000001b900000000
-answer as vector:
-   108    151     31      0      0      0      0      0 
-
-./verilog/core_tb.v:1106: $finish called at 2533500 (1ps)
+./verilog/core_tb.v:1105: $finish called at 2750500 (1ps)

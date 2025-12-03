@@ -91,7 +91,7 @@ module core_tb;
   integer nij = 0;
 
   reg [8*30:1] stringvar;
-  reg [8*30:1] w_file_name;
+  reg [8*33:1] w_file_name;
   reg execute_warmup = 1;
   wire ofifo_valid;
   wire [col*psum_bw-1:0] sfp_out;
@@ -245,14 +245,11 @@ module core_tb;
   // useful tasks
   task automatic compare_psum_out;
     input reg [1:0] mode;
+    input integer length;
     begin
       case (mode)
-        0: out_file = $fopen("P16x8_Files/out_no_relu.txt", "r");
-        1: out_file = $fopen("P16x8_Files/out_relu.txt", "r");
-        // for testing the OS mode, which currently does not support tiling on inputs, we have
-        // a different set of inputs
-        2: out_file = $fopen("../OSWS_Files/out.txt", "r");  // only testing
-        // post-relu
+        0: out_file = $fopen("../P16x8_Files/out_no_relu.txt", "r");
+        1: out_file = $fopen("../P16x8_Files/out_relu.txt", "r");
       endcase
 
       // Following three lines are to remove the first three comment lines of the file
@@ -262,7 +259,7 @@ module core_tb;
 
       RA_pmem = 0;
       CEN_pmem = 0;
-      for (t = 0; t < len_onij + 1; t = t + 1) begin
+      for (t = 0; t < length + 1; t = t + 1) begin
         if (t > 0) begin
           RA_pmem = RA_pmem + 1;
           // $display("Setting RA_pmem to %d as the next pmem request", RA_pmem);
@@ -463,11 +460,11 @@ module core_tb;
         case (in_tile)
           0: begin
             // tile_dir = "P16x8_Files/Tile0";
-            x_file = $fopen("P16x8_Files/Tile0/activation.txt", "r");
+            x_file = $fopen("../P16x8_Files/Tile0/activation.txt", "r");
           end
           1: begin
             // tile_dir = "P16x8_Files/Tile1";
-            x_file = $fopen("P16x8_Files/Tile1/activation.txt", "r");
+            x_file = $fopen("../P16x8_Files/Tile1/activation.txt", "r");
           end
         endcase
         // Following three lines are to remove the first three comment lines of the file
@@ -520,27 +517,27 @@ module core_tb;
           case (in_tile)
             0:
             case (kij)
-              0: w_file = $fopen(("P16x8_Files/Tile0/weight_0.txt"), "r");
-              1: w_file = $fopen(("P16x8_Files/Tile0/weight_1.txt"), "r");
-              2: w_file = $fopen(("P16x8_Files/Tile0/weight_2.txt"), "r");
-              3: w_file = $fopen(("P16x8_Files/Tile0/weight_3.txt"), "r");
-              4: w_file = $fopen(("P16x8_Files/Tile0/weight_4.txt"), "r");
-              5: w_file = $fopen(("P16x8_Files/Tile0/weight_5.txt"), "r");
-              6: w_file = $fopen(("P16x8_Files/Tile0/weight_6.txt"), "r");
-              7: w_file = $fopen(("P16x8_Files/Tile0/weight_7.txt"), "r");
-              8: w_file = $fopen(("P16x8_Files/Tile0/weight_8.txt"), "r");
+              0: w_file = $fopen(("../P16x8_Files/Tile0/weight_0.txt"), "r");
+              1: w_file = $fopen(("../P16x8_Files/Tile0/weight_1.txt"), "r");
+              2: w_file = $fopen(("../P16x8_Files/Tile0/weight_2.txt"), "r");
+              3: w_file = $fopen(("../P16x8_Files/Tile0/weight_3.txt"), "r");
+              4: w_file = $fopen(("../P16x8_Files/Tile0/weight_4.txt"), "r");
+              5: w_file = $fopen(("../P16x8_Files/Tile0/weight_5.txt"), "r");
+              6: w_file = $fopen(("../P16x8_Files/Tile0/weight_6.txt"), "r");
+              7: w_file = $fopen(("../P16x8_Files/Tile0/weight_7.txt"), "r");
+              8: w_file = $fopen(("../P16x8_Files/Tile0/weight_8.txt"), "r");
             endcase
             1:
             case (kij)
-              0: w_file = $fopen(("P16x8_Files/Tile1/weight_0.txt"), "r");
-              1: w_file = $fopen(("P16x8_Files/Tile1/weight_1.txt"), "r");
-              2: w_file = $fopen(("P16x8_Files/Tile1/weight_2.txt"), "r");
-              3: w_file = $fopen(("P16x8_Files/Tile1/weight_3.txt"), "r");
-              4: w_file = $fopen(("P16x8_Files/Tile1/weight_4.txt"), "r");
-              5: w_file = $fopen(("P16x8_Files/Tile1/weight_5.txt"), "r");
-              6: w_file = $fopen(("P16x8_Files/Tile1/weight_6.txt"), "r");
-              7: w_file = $fopen(("P16x8_Files/Tile1/weight_7.txt"), "r");
-              8: w_file = $fopen(("P16x8_Files/Tile1/weight_8.txt"), "r");
+              0: w_file = $fopen(("../P16x8_Files/Tile1/weight_0.txt"), "r");
+              1: w_file = $fopen(("../P16x8_Files/Tile1/weight_1.txt"), "r");
+              2: w_file = $fopen(("../P16x8_Files/Tile1/weight_2.txt"), "r");
+              3: w_file = $fopen(("../P16x8_Files/Tile1/weight_3.txt"), "r");
+              4: w_file = $fopen(("../P16x8_Files/Tile1/weight_4.txt"), "r");
+              5: w_file = $fopen(("../P16x8_Files/Tile1/weight_5.txt"), "r");
+              6: w_file = $fopen(("../P16x8_Files/Tile1/weight_6.txt"), "r");
+              7: w_file = $fopen(("../P16x8_Files/Tile1/weight_7.txt"), "r");
+              8: w_file = $fopen(("../P16x8_Files/Tile1/weight_8.txt"), "r");
             endcase
           endcase
 
@@ -869,7 +866,7 @@ module core_tb;
         end
       end
 
-      compare_psum_out(0);
+      compare_psum_out(0, 16);
 
       #0.5 clk = 1'b0;
       CEN_pmem  = 1;
@@ -897,7 +894,7 @@ module core_tb;
 
       // validate activated PSUMs against ReLU
       $display("validating activated (ReLU'd) PSUMs");
-      compare_psum_out(1);
+      compare_psum_out(1, 16);
     end
 
     // Now for Output-Stationary Execution!
@@ -918,18 +915,27 @@ module core_tb;
     A_xmem   = 11'b11111111111;
     WEN_xmem = 0;
     CEN_xmem = 0;
-    for (kij = 0; kij < 9; kij = kij + 1) begin  // kij loop
+    for (kij = 0; kij < 2 * len_kij; kij = kij + 1) begin  // kij loop
       $display("Loading weights for Kij %d\n", kij);
       case (kij)
-        0: w_file_name = "../OSWS_Files/weight_0.txt";
-        1: w_file_name = "../OSWS_Files/weight_1.txt";
-        2: w_file_name = "../OSWS_Files/weight_2.txt";
-        3: w_file_name = "../OSWS_Files/weight_3.txt";
-        4: w_file_name = "../OSWS_Files/weight_4.txt";
-        5: w_file_name = "../OSWS_Files/weight_5.txt";
-        6: w_file_name = "../OSWS_Files/weight_6.txt";
-        7: w_file_name = "../OSWS_Files/weight_7.txt";
-        8: w_file_name = "../OSWS_Files/weight_8.txt";
+        0:  w_file_name = "../P16x8_Files/Tile0/weight_0.txt";
+        1:  w_file_name = "../P16x8_Files/Tile0/weight_1.txt";
+        2:  w_file_name = "../P16x8_Files/Tile0/weight_2.txt";
+        3:  w_file_name = "../P16x8_Files/Tile0/weight_3.txt";
+        4:  w_file_name = "../P16x8_Files/Tile0/weight_4.txt";
+        5:  w_file_name = "../P16x8_Files/Tile0/weight_5.txt";
+        6:  w_file_name = "../P16x8_Files/Tile0/weight_6.txt";
+        7:  w_file_name = "../P16x8_Files/Tile0/weight_7.txt";
+        8:  w_file_name = "../P16x8_Files/Tile0/weight_8.txt";
+        9:  w_file_name = "../P16x8_Files/Tile1/weight_0.txt";
+        10: w_file_name = "../P16x8_Files/Tile1/weight_1.txt";
+        11: w_file_name = "../P16x8_Files/Tile1/weight_2.txt";
+        12: w_file_name = "../P16x8_Files/Tile1/weight_3.txt";
+        13: w_file_name = "../P16x8_Files/Tile1/weight_4.txt";
+        14: w_file_name = "../P16x8_Files/Tile1/weight_5.txt";
+        15: w_file_name = "../P16x8_Files/Tile1/weight_6.txt";
+        16: w_file_name = "../P16x8_Files/Tile1/weight_7.txt";
+        17: w_file_name = "../P16x8_Files/Tile1/weight_8.txt";
       endcase
 
       w_file = $fopen(w_file_name, "r");
@@ -960,7 +966,7 @@ module core_tb;
 
     // verify that kernel data has been written
     // $display("Verifying that wmem has been written to correctly");
-    for (t = 0; t < len_kij * row; t = t + 1) begin
+    for (t = 0; t < 2 * len_kij * row; t = t + 1) begin
       // $display("%d: %b %b", t, wmem_sim[t], core_instance.weight_sram.memory[t]);
       if (wmem_sim[t] !== core_instance.weight_sram.memory[t]) begin
         $display("Unexpected value in weight SRAM!\n At address %d, expected %d but got %d", t,
@@ -971,14 +977,14 @@ module core_tb;
 
 
     // load activations into activation SRAM
-    x_file = $fopen("../OSWS_Files/activation_os.txt", "r");
+    x_file = $fopen("../P16x8_Files/activation_os.txt", "r");
     // Following three lines are to remove the first three comment lines of the file
     x_scan_file = $fscanf(x_file, "%s", captured_data);
     x_scan_file = $fscanf(x_file, "%s", captured_data);
     x_scan_file = $fscanf(x_file, "%s", captured_data);
     /////// Activation data writing to memory ///////
     A_xmem = 0;
-    for (t = 0; t < col * len_kij; t = t + 1) begin
+    for (t = 0; t < 2 * col * len_kij; t = t + 1) begin
       // xw_mode=0 is the default, but we want to be explicit that we are
       // writing to activations
       xw_mode = 0;
@@ -1006,7 +1012,7 @@ module core_tb;
     // verify activations are written to SRAM
     // there should be 8 blocks of activations; each block has 9 activations,
     // corresponding to the number of elements in kij.
-    for (t = 0; t < in_chan_num * len_kij; t = t + 1) begin
+    for (t = 0; t < 2 * in_chan_num * len_kij; t = t + 1) begin
       if (amem_sim[t] != core_instance.activation_sram.memory[t]) begin
         $display("Unexpected value in activation SRAM!\n At address %d, expected %h but got %h", t,
                  amem_sim[t], core_instance.activation_sram.memory[t]);
@@ -1022,12 +1028,12 @@ module core_tb;
     #0.5 clk = 1'b1;
     #0.5 clk = 1'b0;
     // execution is much simpler in output-stationary
-    for (t = 0; t < in_chan_num * len_kij + col + row + 10; t = t + 1) begin
+    for (t = 0; t < 2 * in_chan_num * len_kij + col + row + 10; t = t + 1) begin
       // write to IFIFOs
       // issue read to IFIFO, grabbing from weights
       // issue read to L0, grabbing from activations
       // issue os execute instrution to PEs
-      if (0 <= t && t < in_chan_num * len_kij + 1) begin
+      if (0 <= t && t < 2 * in_chan_num * len_kij + 1) begin
         if (t > 0) A_xmem = A_xmem + 1;
         l0_rd = 1;
         l0_wr = 1;
@@ -1040,13 +1046,9 @@ module core_tb;
         ififo_rd = 0;
       end
 
-      if (0 <= t && t < in_chan_num * len_kij) begin
-      end else begin
-      end
-
       // issue one execute to perfomr a_q/b_q load
       // then in_chan*len_kij executes to actually perform MAC
-      if (0 <= t && t < in_chan_num * len_kij + 1) begin
+      if (0 <= t && t < 2 * in_chan_num * len_kij + 1) begin
         execute = 1;
       end else begin
         execute = 0;
@@ -1089,10 +1091,7 @@ module core_tb;
     #0.5 clk = 1'b1;
     #0.5 clk = 1'b0;
 
-    // originally we were testing pre-relu output (full psums)
-    // at the end we are only testing post ReLU, but we are confident that
-    // pre-ReLU values are correct as well.
-    // compare_psum_out(0);  // only the first 8 need to match
+    compare_psum_out(0, 8);
 
     #0.5 clk = 1'b1;
     #0.5 clk = 1'b0;
@@ -1101,7 +1100,7 @@ module core_tb;
     write_relu();
 
     // TODO: validate against ground truth
-    compare_psum_out(2);
+    compare_psum_out(1, 8);
 
     #10 $finish;
 
