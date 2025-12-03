@@ -244,7 +244,7 @@ module core_tb;
   // useful tasks
   task automatic compare_psum_out;
     begin
-      out_file = $fopen("out.txt", "r");
+      out_file = $fopen("../OSWS_Files/out.txt", "r");  // only testing
 
       // Following three lines are to remove the first three comment lines of the file
       out_scan_file = $fscanf(out_file, "%s", answer);
@@ -323,6 +323,51 @@ module core_tb;
 
   endtask
 
+  task automatic write_relu;
+    begin
+      RA_pmem   = 0;
+      WA_pmem   = 0;
+      pmem_mode = 1;  // write from SFP back to psums
+      relu_en   = 1;
+      // Pass psums thru SFP to perform ReLU
+      for (i = 0; i < len_onij; i = i + 1) begin
+        CEN_pmem = 0;
+        if (i > 0) begin
+          RA_pmem = RA_pmem + 1;
+          WA_pmem = WA_pmem + 1;
+        end
+        // t = 0+i: reset SFP. Make sure to turn off write request (in case of loop). perform a read request to PSUM memory
+        sfp_reset = 1;
+        WEN_pmem  = 1;
+        #0.5 clk = 1'b1;
+        #0.5 clk = 1'b0;
+
+        // t = 1+h: SFP accumulator is zero'd. Data is available to SFU and is about to be computed
+        sfp_reset = 0;
+        acc = 1;  // this is just an SFU enable bit
+        #0.5 clk = 1'b1;
+        #0.5 clk = 1'b0;
+        // t = 2+h: SFP has the correct value, but needs to wait a cycle due
+        // to sfp_out_q being registered.
+        sfp_reset = 0;
+        acc = 0;
+        #0.5 clk = 1'b1;
+        #0.5 clk = 1'b0;
+
+        // t = 3+h: value is available at write port of psum. Write it.
+        WEN_pmem = 0;
+        #0.5 clk = 1'b1;
+        #0.5 clk = 1'b0;
+        $display("sfp_out: %h", sfp_out);
+      end
+
+      WEN_pmem = 1;
+      CEN_pmem = 1;
+      #0.5 clk = 1'b0;
+      #0.5 clk = 1'b1;
+    end
+  endtask
+
   task automatic reset_core;
     begin
       #0.5 clk = 1'b0;
@@ -371,7 +416,7 @@ module core_tb;
 
     if (test_ws) begin
       //x_file = $fopen("activation_tile0.txt", "r");
-      x_file = $fopen("activation.txt", "r");
+      x_file = $fopen("../OSWS_Files/activation.txt", "r");
       // Following three lines are to remove the first three comment lines of the file
       x_scan_file = $fscanf(x_file, "%s", captured_data);
       x_scan_file = $fscanf(x_file, "%s", captured_data);
@@ -424,15 +469,15 @@ module core_tb;
       for (kij = 0; kij < 9; kij = kij + 1) begin  // kij loop
         $display("Kij %d\n", kij);
         case (kij)
-          0: w_file_name = "weight_0.txt";
-          1: w_file_name = "weight_1.txt";
-          2: w_file_name = "weight_2.txt";
-          3: w_file_name = "weight_3.txt";
-          4: w_file_name = "weight_4.txt";
-          5: w_file_name = "weight_5.txt";
-          6: w_file_name = "weight_6.txt";
-          7: w_file_name = "weight_7.txt";
-          8: w_file_name = "weight_8.txt";
+          0: w_file_name = "../OSWS_Files/weight_0.txt";
+          1: w_file_name = "../OSWS_Files/weight_1.txt";
+          2: w_file_name = "../OSWS_Files/weight_2.txt";
+          3: w_file_name = "../OSWS_Files/weight_3.txt";
+          4: w_file_name = "../OSWS_Files/weight_4.txt";
+          5: w_file_name = "../OSWS_Files/weight_5.txt";
+          6: w_file_name = "../OSWS_Files/weight_6.txt";
+          7: w_file_name = "../OSWS_Files/weight_7.txt";
+          8: w_file_name = "../OSWS_Files/weight_8.txt";
         endcase
         // NOTE: instead of writing all kijs before summing them (sequential
         // style), continuously perform the summation on the same psum elements.
@@ -706,6 +751,7 @@ module core_tb;
           // print valid bits coming out of the last column
         end
 
+
         execute = 0;
         CEN_pmem = 1;
         CEN_xmem = 1;
@@ -722,6 +768,13 @@ module core_tb;
         // end
         // if (kij == 0) $finish;
       end
+
+      #0.5 clk = 1'b1;
+      #0.5 clk = 1'b0;
+
+      // Pass psums thru SFP to perform ReLU
+      write_relu();
+
 
       ////////// SRAM verification /////////
       // expecting in out.txt:
@@ -801,15 +854,15 @@ module core_tb;
     for (kij = 0; kij < 9; kij = kij + 1) begin  // kij loop
       $display("Loading weights for Kij %d\n", kij);
       case (kij)
-        0: w_file_name = "weight_0.txt";
-        1: w_file_name = "weight_1.txt";
-        2: w_file_name = "weight_2.txt";
-        3: w_file_name = "weight_3.txt";
-        4: w_file_name = "weight_4.txt";
-        5: w_file_name = "weight_5.txt";
-        6: w_file_name = "weight_6.txt";
-        7: w_file_name = "weight_7.txt";
-        8: w_file_name = "weight_8.txt";
+        0: w_file_name = "../OSWS_Files/weight_0.txt";
+        1: w_file_name = "../OSWS_Files/weight_1.txt";
+        2: w_file_name = "../OSWS_Files/weight_2.txt";
+        3: w_file_name = "../OSWS_Files/weight_3.txt";
+        4: w_file_name = "../OSWS_Files/weight_4.txt";
+        5: w_file_name = "../OSWS_Files/weight_5.txt";
+        6: w_file_name = "../OSWS_Files/weight_6.txt";
+        7: w_file_name = "../OSWS_Files/weight_7.txt";
+        8: w_file_name = "../OSWS_Files/weight_8.txt";
       endcase
 
       w_file = $fopen(w_file_name, "r");
@@ -851,7 +904,7 @@ module core_tb;
 
 
     // load activations into activation SRAM
-    x_file = $fopen("activation_os.txt", "r");
+    x_file = $fopen("../OSWS_Files/activation_os.txt", "r");
     // Following three lines are to remove the first three comment lines of the file
     x_scan_file = $fscanf(x_file, "%s", captured_data);
     x_scan_file = $fscanf(x_file, "%s", captured_data);
@@ -1008,6 +1061,13 @@ module core_tb;
     ofifo_rd = 0;
     #0.5 clk = 1'b1;
     #0.5 clk = 1'b0;
+
+    #0.5 clk = 1'b1;
+    #0.5 clk = 1'b0;
+
+    // Pass psums thru SFP to perform ReLU
+    write_relu();
+
 
     compare_psum_out();  // only the first 8 need to match
 

@@ -44,9 +44,9 @@ module sfp (
 
           //acc_reg[k] <= next_val;
           if (valid_in[k]) begin
-            acc_reg[k] <= (relu_en && (acc_reg[k] + in_psum[(k+1)*psum_bw-1:k*psum_bw] < 0)) ? 0 : acc_reg[k] + in_psum[(k+1)*psum_bw-1:k*psum_bw];
+            acc_reg[k] <= (relu_en && (acc_reg[k] + in_psum[(k+1)*psum_bw-1])) ? 0 : acc_reg[k] + in_psum[(k+1)*psum_bw-1:k*psum_bw];
           end else begin
-            acc_reg[k] <= (relu_en && acc_reg[k] < 0) ? 0 : acc_reg[k];
+            acc_reg[k] <= (relu_en && acc_reg[k][psum_bw-1]) ? 0 : acc_reg[k];
           end
         end
       end
