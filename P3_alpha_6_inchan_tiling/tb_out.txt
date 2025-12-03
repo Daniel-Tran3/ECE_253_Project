@@ -52,6 +52,7 @@ psum memory contents: after finishing
          13: fce7ffc4fd9afe5aff84fe6cfe61fd6c
          14: fc7a0016fdc5fc8400b8fd9cfc88fe6a
          15: ff85feeafe7afe22ffc4ff7afdddfde7
+Checking results for raw partial sums on weight stationary execution
  0-th output featuremap Data matched! :D
  1-th output featuremap Data matched! :D
  2-th output featuremap Data matched! :D
@@ -68,23 +69,7 @@ psum memory contents: after finishing
 13-th output featuremap Data matched! :D
 14-th output featuremap Data matched! :D
 15-th output featuremap Data matched! :D
-sfp_out: 00000000000000000000000000000143
-sfp_out: 0000000000000000000000000000004e
-sfp_out: 00000000000000000000000000000000
-sfp_out: 00200000000000000000024100000000
-sfp_out: 00000000000000000000000000000000
-sfp_out: 00000000000000000000000000000000
-sfp_out: 00000000000000000000000000000000
-sfp_out: 00000000000000000000002d00000000
-sfp_out: 00000000000000000042000000000000
-sfp_out: 00000000000000000000000000000000
-sfp_out: 00000000000000000000000000000000
-sfp_out: 00000000000000000000000000000000
-sfp_out: 00000000000000000000000000000000
-sfp_out: 00000000000000000000000000000000
-sfp_out: 000000160000000000b8000000000000
-sfp_out: 00000000000000000000000000000000
-validating activated (ReLU'd) PSUMs
+validating activated (ReLU'd) PSUMs from weight stationary execution
  0-th output featuremap Data matched! :D
  1-th output featuremap Data matched! :D
  2-th output featuremap Data matched! :D
@@ -102,7 +87,7 @@ validating activated (ReLU'd) PSUMs
 14-th output featuremap Data matched! :D
 15-th output featuremap Data matched! :D
 
-Zeroed out psum; expect failure
+Zeroed out psum in preparation for testing output stationary execution; expect failure
 
 Loading weights for Kij           0
 
@@ -140,6 +125,7 @@ Loading weights for Kij          16
 
 Loading weights for Kij          17
 
+validating raw PSUMs from output stationary execution
  0-th output featuremap Data matched! :D
  1-th output featuremap Data matched! :D
  2-th output featuremap Data matched! :D
@@ -148,22 +134,7 @@ Loading weights for Kij          17
  5-th output featuremap Data matched! :D
  6-th output featuremap Data matched! :D
  7-th output featuremap Data matched! :D
-sfp_out: 00000000000000000000000000000143
-sfp_out: 0000000000000000000000000000004e
-sfp_out: 00000000000000000000000000000000
-sfp_out: 00200000000000000000024100000000
-sfp_out: 00000000000000000000000000000000
-sfp_out: 00000000000000000000000000000000
-sfp_out: 00000000000000000000000000000000
-sfp_out: 00000000000000000000002d00000000
-sfp_out: 00000000000000000000000000000000
-sfp_out: 00000000000000000000000000000000
-sfp_out: 00000000000000000000000000000000
-sfp_out: 00000000000000000000000000000000
-sfp_out: 00000000000000000000000000000000
-sfp_out: 00000000000000000000000000000000
-sfp_out: 00000000000000000000000000000000
-sfp_out: 00000000000000000000000000000000
+validating activated (ReLU'd) PSUMs from output stationary execution
  0-th output featuremap Data matched! :D
  1-th output featuremap Data matched! :D
  2-th output featuremap Data matched! :D
@@ -172,4 +143,4 @@ sfp_out: 00000000000000000000000000000000
  5-th output featuremap Data matched! :D
  6-th output featuremap Data matched! :D
  7-th output featuremap Data matched! :D
-./verilog/core_tb.v:1105: $finish called at 2750500 (1ps)
+./verilog/core_tb.v:1107: $finish called at 2750500 (1ps)

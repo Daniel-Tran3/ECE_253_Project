@@ -905,7 +905,8 @@ module core_tb;
     clear_psum_ram;
 
     // we expect everything to fail.
-    $display("\nZeroed out psum in preparation for testing output stationary execution; expect failure\n");
+    $display(
+        "\nZeroed out psum in preparation for testing output stationary execution; expect failure\n");
     // compare_psum_out;
 
     // reset the machine, just because
@@ -1092,7 +1093,7 @@ module core_tb;
     #0.5 clk = 1'b0;
 
 
-      $display("validating raw PSUMs from output stationary execution");
+    $display("validating raw PSUMs from output stationary execution");
     compare_psum_out(0, 8);
 
     #0.5 clk = 1'b1;
@@ -1101,7 +1102,7 @@ module core_tb;
     // Pass psums thru SFP to perform ReLU
     write_relu;
 
-      $display("validating activated (ReLU'd) PSUMs from output stationary execution");
+    $display("validating activated (ReLU'd) PSUMs from output stationary execution");
     compare_psum_out(1, 8);
 
     #10 $finish;
