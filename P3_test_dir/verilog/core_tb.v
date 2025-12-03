@@ -249,8 +249,6 @@ module core_tb;
       case (mode)
         0: out_file = $fopen("P16x8_Files/out_no_relu.txt", "r");
         1: out_file = $fopen("P16x8_Files/out_relu.txt", "r");
-        2: out_file = $fopen("out.txt", "r");
-        3: out_file = $fopen("out_no_relu.txt", "r");
       endcase
 
       // Following three lines are to remove the first three comment lines of the file
@@ -1093,7 +1091,7 @@ module core_tb;
     #0.5 clk = 1'b1;
     #0.5 clk = 1'b0;
 
-    compare_psum_out(2);  // only the first 8 need to match
+    compare_psum_out(0);  // only the first 8 need to match
 
     #0.5 clk = 1'b1;
     #0.5 clk = 1'b0;
@@ -1102,7 +1100,7 @@ module core_tb;
     write_relu();
 
     // TODO: validate against ground truth
-    compare_psum_out(3);
+    compare_psum_out(1);
 
     #10 $finish;
 
