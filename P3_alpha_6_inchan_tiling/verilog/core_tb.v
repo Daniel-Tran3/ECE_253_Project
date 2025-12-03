@@ -387,7 +387,6 @@ module core_tb;
         WEN_pmem = 0;
         #0.5 clk = 1'b1;
         #0.5 clk = 1'b0;
-        $display("sfp_out: %h", sfp_out);
       end
 
       WEN_pmem = 1;
@@ -422,11 +421,11 @@ module core_tb;
 
     if (test_ws) begin
       //////// Reset /////////
-      reset_core();
+      reset_core;
       /////////////////////////
 
       // ZERO OUT PSUMS IN MEMORY ----------------------------------------------
-      clear_psum_ram();
+      clear_psum_ram;
 
       for (in_tile = 0; in_tile < 2; in_tile = in_tile + 1) begin
         pmem_mode      = 0;
@@ -699,7 +698,7 @@ module core_tb;
           load = 0;
           #0.5 clk = 1'b1;
           #0.5 clk = 1'b0;
-          // print_pe_status();
+          // print_pe_status;
 
           // verify that weights loaded into the kernel are as expected
           for (t = 0; t < row; t = t + 1) begin
@@ -808,7 +807,7 @@ module core_tb;
             #0.5 clk = 1'b0;
 
             // verify some things
-            // print_pe_status();
+            // print_pe_status;
             // print valid bits coming out of the last column
 
           end
@@ -866,6 +865,7 @@ module core_tb;
         end
       end
 
+      $display("Checking results for raw partial sums on weight stationary execution");
       compare_psum_out(0, 16);
 
       #0.5 clk = 1'b0;
@@ -882,7 +882,7 @@ module core_tb;
       relu_en   = 1;
 
       // Pass psums thru SFP to perform ReLU
-      write_relu();
+      write_relu;
 
       WEN_pmem = 1;
       CEN_pmem = 1;
@@ -893,7 +893,7 @@ module core_tb;
       end
 
       // validate activated PSUMs against ReLU
-      $display("validating activated (ReLU'd) PSUMs");
+      $display("validating activated (ReLU'd) PSUMs from weight stationary execution");
       compare_psum_out(1, 16);
     end
 
@@ -902,14 +902,14 @@ module core_tb;
     // again zero out psums in memory, mainly so that we don't accidentally
     // think our machine works because we didn't clear out the old, correct
     // values from PSUM SRAM.
-    clear_psum_ram();
+    clear_psum_ram;
 
     // we expect everything to fail.
-    $display("\nZeroed out psum; expect failure\n");
-    // compare_psum_out();
+    $display("\nZeroed out psum in preparation for testing output stationary execution; expect failure\n");
+    // compare_psum_out;
 
     // reset the machine, just because
-    reset_core();
+    reset_core;
 
     // load weights into weight SRAM
     A_xmem   = 11'b11111111111;
@@ -1056,8 +1056,8 @@ module core_tb;
       #0.5 clk = 1'b1;
       #0.5 clk = 1'b0;
       // $display("t = %d", t);
-      // print_pe_status();
-      // $display();
+      // print_pe_status;
+      // $display;
     end
 
     // OS FLUSH
@@ -1091,15 +1091,17 @@ module core_tb;
     #0.5 clk = 1'b1;
     #0.5 clk = 1'b0;
 
+
+      $display("validating raw PSUMs from output stationary execution");
     compare_psum_out(0, 8);
 
     #0.5 clk = 1'b1;
     #0.5 clk = 1'b0;
 
     // Pass psums thru SFP to perform ReLU
-    write_relu();
+    write_relu;
 
-    // TODO: validate against ground truth
+      $display("validating activated (ReLU'd) PSUMs from output stationary execution");
     compare_psum_out(1, 8);
 
     #10 $finish;
