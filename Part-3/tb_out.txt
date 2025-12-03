@@ -1,0 +1,145 @@
+VCD info: dumpfile core_tb.vcd opened for output.
+Kij           0
+
+Kij           1
+
+Kij           2
+
+Kij           3
+
+Kij           4
+
+Kij           5
+
+Kij           6
+
+Kij           7
+
+Kij           8
+
+sfp_out: 0000000000000000000001e100310000
+sfp_out: 00000000000000000000004800000000
+sfp_out: 00000000000000000000007800000000
+sfp_out: 0000000000080000000000a400020000
+sfp_out: 00000000006f00000000025e00000000
+sfp_out: 00000000016600000000006000000000
+sfp_out: 00000000012b000000000000008a0000
+sfp_out: 010900000012006b0000014900000000
+sfp_out: 00b50000005600000000016d003e0097
+sfp_out: 00000000000000000000010100000000
+sfp_out: 00000000002900000000000100000000
+sfp_out: 016e0000000000000000015100000000
+sfp_out: 0000000000a200000000005800000000
+sfp_out: 006f000000650000000000c200000000
+sfp_out: 00000000000000000000001f0097006c
+sfp_out: 0163000000cd0000000001b900000000
+ 0-th output featuremap Data matched! :D
+ 1-th output featuremap Data matched! :D
+ 2-th output featuremap Data matched! :D
+ 3-th output featuremap Data matched! :D
+ 4-th output featuremap Data matched! :D
+ 5-th output featuremap Data matched! :D
+ 6-th output featuremap Data matched! :D
+ 7-th output featuremap Data matched! :D
+ 8-th output featuremap Data matched! :D
+ 9-th output featuremap Data matched! :D
+10-th output featuremap Data matched! :D
+11-th output featuremap Data matched! :D
+12-th output featuremap Data matched! :D
+13-th output featuremap Data matched! :D
+14-th output featuremap Data matched! :D
+15-th output featuremap Data matched! :D
+
+Zeroed out psum
+
+Loading weights for Kij           0
+
+Loading weights for Kij           1
+
+Loading weights for Kij           2
+
+Loading weights for Kij           3
+
+Loading weights for Kij           4
+
+Loading weights for Kij           5
+
+Loading weights for Kij           6
+
+Loading weights for Kij           7
+
+Loading weights for Kij           8
+
+sfp_out: 0000000000000000000001e100310000
+sfp_out: 00000000000000000000004800000000
+sfp_out: 00000000000000000000007800000000
+sfp_out: 0000000000080000000000a400020000
+sfp_out: 00000000006f00000000025e00000000
+sfp_out: 00000000016600000000006000000000
+sfp_out: 00000000012b000000000000008a0000
+sfp_out: 010900000012006b0000014900000000
+sfp_out: 00000000000000000000000000000000
+sfp_out: 00000000000000000000000000000000
+sfp_out: 00000000000000000000000000000000
+sfp_out: 00000000000000000000000000000000
+sfp_out: 00000000000000000000000000000000
+sfp_out: 00000000000000000000000000000000
+sfp_out: 00000000000000000000000000000000
+sfp_out: 00000000000000000000000000000000
+ 0-th output featuremap Data matched! :D
+ 1-th output featuremap Data matched! :D
+ 2-th output featuremap Data matched! :D
+ 3-th output featuremap Data matched! :D
+ 4-th output featuremap Data matched! :D
+ 5-th output featuremap Data matched! :D
+ 6-th output featuremap Data matched! :D
+ 7-th output featuremap Data matched! :D
+ 8-th output featuremap Data ERROR!!
+psum_sram: 00000000000000000000000000000000
+answer: 00b50000005600000000016d003e0097
+answer as vector:
+     0      0    329      0    107     18      0    265 
+
+ 9-th output featuremap Data ERROR!!
+psum_sram: 00000000000000000000000000000000
+answer: 00000000000000000000010100000000
+answer as vector:
+   151     62    365      0      0     86      0    181 
+
+10-th output featuremap Data ERROR!!
+psum_sram: 00000000000000000000000000000000
+answer: 00000000002900000000000100000000
+answer as vector:
+     0      0    257      0      0      0      0      0 
+
+11-th output featuremap Data ERROR!!
+psum_sram: 00000000000000000000000000000000
+answer: 016e0000000000000000015100000000
+answer as vector:
+     0      0      1      0      0     41      0      0 
+
+12-th output featuremap Data ERROR!!
+psum_sram: 00000000000000000000000000000000
+answer: 0000000000a200000000005800000000
+answer as vector:
+     0      0    337      0      0      0      0    366 
+
+13-th output featuremap Data ERROR!!
+psum_sram: 00000000000000000000000000000000
+answer: 006f000000650000000000c200000000
+answer as vector:
+     0      0     88      0      0    162      0      0 
+
+14-th output featuremap Data ERROR!!
+psum_sram: 00000000000000000000000000000000
+answer: 00000000000000000000001f0097006c
+answer as vector:
+     0      0    194      0      0    101      0    111 
+
+15-th output featuremap Data ERROR!!
+psum_sram: 00000000000000000000000000000000
+answer: 0163000000cd0000000001b900000000
+answer as vector:
+   108    151     31      0      0      0      0      0 
+
+./verilog/core_tb.v:1074: $finish called at 1544000 (1ps)
